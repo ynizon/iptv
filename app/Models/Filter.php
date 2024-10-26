@@ -9,4 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Filter extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+    ];
 }

@@ -29,6 +29,7 @@ class SearchController extends Controller
         $category = $request->input("category");
         if ($formats == null) {$formats = [];}
         $urlsTmp = Url::where("name", "like", "%".$query."%")->where("filter","=",0);
+
         if ($category != '') {
             if ($category == -1) {
                 $urlsTmp->where("favorite" , "=", 1);
@@ -36,7 +37,7 @@ class SearchController extends Controller
                 $urlsTmp->where("category" , "=", $category);
             }
         }
-        $urlsTmp = $urlsTmp->orderBy("name")->limit(300)->get();
+        $urlsTmp = $urlsTmp->orderBy("name")->limit(3000)->get();
         $urls = [
                 "movies" => [],
                 "series" => [],
