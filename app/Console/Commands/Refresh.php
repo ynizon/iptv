@@ -136,8 +136,12 @@ class Refresh extends Command
                             $episod = $matches[2];
                         }
 
-                        foreach ($this->tvChannels as $tvChannel){
-                            if (stripos($group_title, $tvChannel) !== false){
+                        if (stripos($tvg_name, $group_title) !== false && $serie == 1){
+                            $group_title = "Serie";
+                        }
+
+                        foreach ($this->tvChannels as $tvChannelTmp){
+                            if (stripos($group_title, $tvChannelTmp) !== false){
                                 $tvChannel = 1;
                                 $movie = 0;
                                 break;
@@ -158,10 +162,12 @@ class Refresh extends Command
                             'watched' => 0,
                         ];
                     } else {
-                        $urlerror = new UrlError();
-                        $urlerror->url = $row;
-                        $urlerror->playlist_id = $playlist->id;
-                        $urlerror->save();
+                        if (stripos($row, "#EXTINF:-1") === false) {
+                            $urlerror = new UrlError();
+                            $urlerror->url = $row;
+                            $urlerror->playlist_id = $playlist->id;
+                            $urlerror->save();
+                        }
                     }
                 } else {
                     if (isset($url['name']))
