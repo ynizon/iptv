@@ -5,16 +5,28 @@ namespace App\Console\Commands;
 use App\Models\Filter;
 use App\Models\Playlist;
 use App\Models\Url;
-use App\Models\UrlBackup;
 use App\Models\UrlError;
+use App\Models\UrlImport;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\SQLiteConnection;
+use Illuminate\Support\Facades\DB;
 
 class Refresh extends Command
 {
+
+    protected array $tvChannels = [
+        " TV ",
+        "FR SPORTS (France)",
+        "DAZN",
+        "EUROSPORT",
+        "NBA PASS",
+        "CHAINES.",
+    ];
+
     /**
      * The name and signature of the console command.
      *
@@ -34,12 +46,16 @@ class Refresh extends Command
      */
     public function handle(DatabaseManager $manager)
     {
+
+        $this->filterUrls();
+        exit();
+
+        UrlError::truncate();
         $this->setWalJournalMode(
             $db = $this->getDatabase($manager, 'sqlite')
         );
+
         $startTime = microtime(true);
-        $this->info('Backup Favorites');
-        $this->backupFavorites();
         $nbPlaylist = 0;
         foreach (Playlist::all() as $playlist) {
             $nbPlaylist++;
@@ -52,38 +68,19 @@ class Refresh extends Command
                 $this->parseFileAndCreateUrl($playlist);
             }
         }
+
+         DB::table('url_imports')->orderBy('id')->chunk(100, function ($rows) {
+            $data = json_decode(json_encode($rows), true);
+            DB::table('urls')->insertOrIgnore($data);
+        });
+
         $this->info('Filter urls');
         $this->filterUrls();
-        $this->info('Restore Favorites');
-        $this->restoreFavorites();
+
+        UrlImport::truncate();
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         $this->info("Finished : " . number_format($executionTime, 2) . " sec with ".UrlError::count() . " errors");
-    }
-
-    protected function backupFavorites()
-    {
-        UrlBackup::truncate();
-        UrlError::truncate();
-        $urls = Url::where("watched","=",1)->orWhere("favorite","=",1)->get();
-        foreach ($urls as $url){
-            $urlBackup = new UrlBackup();
-            $urlBackup->url = $url->url;
-            $urlBackup->favorite = $url->favorite;
-            $urlBackup->watched = $url->watched;
-            $urlBackup->save();
-        }
-    }
-
-    protected function restoreFavorites()
-    {
-        $urlBackups = UrlBackup::all();
-        foreach ($urlBackups as $urlBackup){
-            $url = Url::where("url","=",$urlBackups->url)->first();
-            $url->favorite = $urlBackup->favorite;
-            $url->watched = $urlBackup->watched;
-            $url->save();
-        }
     }
 
     protected function downloadFile($playlist)
@@ -111,7 +108,7 @@ class Refresh extends Command
 
     protected function parseFileAndCreateUrl($playlist)
     {
-        $playlist->urls()->delete();
+        $playlist->urlImports()->delete();
 
         $nb = 0;
         $urls = [];
@@ -142,9 +139,13 @@ class Refresh extends Command
                             $season = $matches[1];
                             $episod = $matches[2];
                         }
-                        if (stripos($group_title, ' TV ') !== false){
-                            $tvChannel = 1;
-                            $movie = 0;
+
+                        foreach ($this->tvChannels as $tvChannel){
+                            if (stripos($group_title, $tvChannel) !== false){
+                                $tvChannel = 1;
+                                $movie = 0;
+                                break;
+                            }
                         }
 
                         $url =  [
@@ -174,7 +175,7 @@ class Refresh extends Command
                         if (!isset($urls[$url['url']])) {
                             $data[] = $url;
                             if ($nb >= 1000) {
-                                Url::insert($data);
+                                UrlImport::insert($data);
                                 $data = [];
                                 $nb = 0;
                                 //$this->createUrl($url, $playlist);
@@ -187,7 +188,7 @@ class Refresh extends Command
         }
 
         if (count($data) > 0){
-            Url::insert($data);
+            UrlImport::insert($data);
         }
         $this->info('');
     }
@@ -195,9 +196,10 @@ class Refresh extends Command
     /**
      * Returns the Database Connection
      *
-     * @param  \Illuminate\Database\DatabaseManager $manager
-     * @param  string $connection
+     * @param \Illuminate\Database\DatabaseManager $manager
+     * @param string $connection
      * @return SQLiteConnection
+     * @throws Exception
      */
     protected function getDatabase(DatabaseManager $manager, string $connection)
     {
@@ -205,7 +207,7 @@ class Refresh extends Command
 
         // We will throw an exception if the database is not SQLite
         if(!$db instanceof SQLiteConnection) {
-            throw new LogicException("The '$connection' connection must be sqlite, [{$db->getDriverName()}] given.");
+            throw new Exception("The '$connection' connection must be sqlite, [{$db->getDriverName()}] given.");
         }
 
         return $db;
@@ -235,7 +237,7 @@ class Refresh extends Command
 
     protected function createUrl($urlImport, $playlist)
     {
-        $url = new Url();
+        $url = new UrlImport();
         $url->url = $urlImport['url'];
         $url->episod = $urlImport['episod'];
         $url->season = $urlImport['season'];
@@ -251,13 +253,21 @@ class Refresh extends Command
     }
 
     protected function filterUrls() {
-        $bar = $this->output->createProgressBar(count(Filter::all()));
+        $bar = $this->output->createProgressBar(count($this->tvChannels) + count(Filter::all()));
         foreach (Filter::all() as $filter) {
             $bar->advance();
             Url::where("name", "like", "%" . $filter->name . "%")
                 ->orWhere("category", "like", "%" . $filter->name . "%")
                 ->update(["filter" => 1]);
         }
+
+        foreach ($this->tvChannels as $tvChannel) {
+            $bar->advance();
+            Url::where("category", "like", "%" . $tvChannel . "%")
+                ->orWhere("name", "like", "%" . $tvChannel . "%")
+                ->update(["tvchannel" => 1 , "movie" =>0, "serie" =>0]);
+        }
+
         $this->info('');
     }
 }

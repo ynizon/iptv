@@ -19,4 +19,9 @@ class Playlist extends Model
     {
         return $this->hasMany(Url::class);
     }
+
+    public function urlImports(): HasMany
+    {
+        return $this->hasMany(UrlImport::class);
+    }
 }
