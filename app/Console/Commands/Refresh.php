@@ -8,7 +8,10 @@ use App\Models\Url;
 use App\Models\UrlBackup;
 use App\Models\UrlError;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\DatabaseManager;
+use Illuminate\Database\Query\Expression;
+use Illuminate\Database\SQLiteConnection;
 
 class Refresh extends Command
 {
@@ -29,64 +32,39 @@ class Refresh extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(DatabaseManager $manager)
     {
-
-//        $urls = Url::all();
-//        foreach ($urls as $url) {
-//            foreach (Filter::all() as $filter) {
-//                if (stripos($url['category'], $filter->name) !== false) {
-//                    $url->filter = 1;
-//                    $url->save();
-//                }
-//            }
-//        }
-//
-//        exit();
-//        $urls = Url::all();
-//        foreach ($urls as $url){
-//            $movie = 1;
-//            $tvChannel = 0;
-//            $episod = 0;
-//            $season = 0;
-//            $serie = 0;
-//
-//            preg_match('/(\d{2}) E(\d{2})/', $url->name, $matches);
-//            if (!empty($matches)) {
-//                $serie = 1;
-//                $movie = 0;
-//                $season = $matches[1];
-//                $episod = $matches[2];
-//            }
-//            if (stripos($url->category, ' TV ') !== false){
-//                $tvChannel = 1;
-//                $movie = 0;
-//            }
-//            $url->tvchannel = $tvChannel;
-//            $url->movie = $movie;
-//            $url->serie = $serie;
-//            $url->season = $season;
-//            $url->episod = $episod;
-//            $url->save();
-//        }
-//
-//        exit();
-
+        $this->setWalJournalMode(
+            $db = $this->getDatabase($manager, 'sqlite')
+        );
+        $startTime = microtime(true);
+        $this->info('Backup Favorites');
         $this->backupFavorites();
+        $nbPlaylist = 0;
         foreach (Playlist::all() as $playlist) {
+            $nbPlaylist++;
             if ($playlist->content == '') {
+                $this->info('Download Playlist Content #'.$nbPlaylist);
                 $playlist = $this->downloadFile($playlist);
             }
             if ($playlist->content != '') {
+                $this->info('Parse Playlist Urls #'.$nbPlaylist);
                 $this->parseFileAndCreateUrl($playlist);
             }
         }
+        $this->info('Filter urls');
+        $this->filterUrls();
+        $this->info('Restore Favorites');
         $this->restoreFavorites();
+        $endTime = microtime(true);
+        $executionTime = $endTime - $startTime;
+        $this->info("Finished : " . number_format($executionTime, 2) . " sec with ".UrlError::count() . " errors");
     }
 
     protected function backupFavorites()
     {
-        Schema::drop('url_backups');
+        UrlBackup::truncate();
+        UrlError::truncate();
         $urls = Url::where("watched","=",1)->orWhere("favorite","=",1)->get();
         foreach ($urls as $url){
             $urlBackup = new UrlBackup();
@@ -135,7 +113,13 @@ class Refresh extends Command
     {
         $playlist->urls()->delete();
 
+        $nb = 0;
+        $urls = [];
+        $data = [];
+        $bar = $this->output->createProgressBar(count(explode("\n",$playlist->content)));
         foreach (explode("\n",$playlist->content) as $row) {
+            $nb++;
+            $bar->advance();
             if ($row != "#EXTM3U") {
                 if (stripos($row, "#EXTINF:-1") !== false) {
                     preg_match('/tvg-id="([^"]*)" tvg-name="((?:[^"]|"")+)" tvg-logo="([^"]*)" group-title="([^"]*)"/', $row, $matches);
@@ -164,6 +148,7 @@ class Refresh extends Command
                         }
 
                         $url =  [
+                            'playlist_id' => $playlist->id,
                             'season' => $season,
                             'episod' => $episod,
                             'serie' => $serie,
@@ -186,18 +171,66 @@ class Refresh extends Command
                     {
                         $url['url'] = trim($row);
 
-                        foreach (Filter::all() as $filter)
-                        {
-                            if (stripos($url['category'], $filter->name) !== false){
-                                $url['filter'] = 1;
+                        if (!isset($urls[$url['url']])) {
+                            $data[] = $url;
+                            if ($nb >= 1000) {
+                                Url::insert($data);
+                                $data = [];
+                                $nb = 0;
+                                //$this->createUrl($url, $playlist);
                             }
+                            $urls[$url['url']] = 1;
                         }
-
-                        $this->createUrl($url, $playlist);
                     }
                 }
             }
         }
+
+        if (count($data) > 0){
+            Url::insert($data);
+        }
+        $this->info('');
+    }
+
+    /**
+     * Returns the Database Connection
+     *
+     * @param  \Illuminate\Database\DatabaseManager $manager
+     * @param  string $connection
+     * @return SQLiteConnection
+     */
+    protected function getDatabase(DatabaseManager $manager, string $connection)
+    {
+        $db = $manager->connection($connection);
+
+        // We will throw an exception if the database is not SQLite
+        if(!$db instanceof SQLiteConnection) {
+            throw new LogicException("The '$connection' connection must be sqlite, [{$db->getDriverName()}] given.");
+        }
+
+        return $db;
+    }
+
+    /**
+     * Sets the Journal Mode to WAL
+     *
+     * @param  \Illuminate\Database\ConnectionInterface $connection
+     * @return bool
+     */
+    protected function setWalJournalMode(ConnectionInterface $connection)
+    {
+        return $connection->statement('PRAGMA journal_mode=WAL;');
+    }
+
+    /**
+     * Returns the current Journal Mode of the Database Connection
+     *
+     * @param  \Illuminate\Database\ConnectionInterface $connection
+     * @return string
+     */
+    protected function getJournalMode(ConnectionInterface $connection)
+    {
+        return data_get($connection->select(new Expression('PRAGMA journal_mode')), '0.journal_mode');
     }
 
     protected function createUrl($urlImport, $playlist)
@@ -215,5 +248,16 @@ class Refresh extends Command
         $url->movie = $urlImport['movie'];
         $url->playlist_id = $playlist->id;
         $url->save();
+    }
+
+    protected function filterUrls() {
+        $bar = $this->output->createProgressBar(count(Filter::all()));
+        foreach (Filter::all() as $filter) {
+            $bar->advance();
+            Url::where("name", "like", "%" . $filter->name . "%")
+                ->orWhere("category", "like", "%" . $filter->name . "%")
+                ->update(["filter" => 1]);
+        }
+        $this->info('');
     }
 }

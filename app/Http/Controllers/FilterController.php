@@ -90,7 +90,7 @@ class FilterController extends Controller
      * @return void
      */
     protected function filterUrls($filterName , $add = false) {
-        $urls = Url::where("name","like","%".$filterName."%")->get();
+        $urls = Url::where("name","like","%".$filterName."%")->orWhere("category","like","%".$filterName."%")->get();
         foreach ($urls as $url){
             $url->filter = (int) $add;
             $url->save();

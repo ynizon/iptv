@@ -1,12 +1,23 @@
+## Prerequis
+Creer un dossier c:\iptv
+Copier le fichier iptv_vlc.bat dedans
+Double cliquer sur iptv.reg 
+Installer composer (https://getcomposer.org/download/)
+Installer VLC (https://www.videolan.org/index.fr.html)
+
 ## Installation
-Modifier l'url dans database/seeder/ ligne 56
-Lancer la commande:
-php artisan key:generate
-php artisan migrate --seed
-puis
-php artisan app:refresh
+Dans le dossier du site web, faire
+- composer install
+- php artisan key:generate
+
+Soit vous ajouter votre playlist M3U dans 
+- dans database/seeder/ ligne 56
+ puis vous Lancer les commandes:
+- php artisan migrate --seed
+- php artisan app:refresh
 
 
-Dans VLC
-L'installer depuis https://www.videolan.org/index.fr.html
-Dans VLC, cocher l'option > Outils > Préférences - n'autoriser qu'une seule instance
+Soit vous lancez les commandes 
+- php artisan migrate
+- vous  ajouter votre playlist M3U depuis l'interface
+- php artisan app:refresh

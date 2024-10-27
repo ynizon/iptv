@@ -37,6 +37,8 @@ class DatabaseSeeder extends Seeder
         'Scandinavie',
         'NETHERLANDS',
         'TURQUES',
+        'MAGHREB',
+        'AFRIQUE',
     ];
 
     /**

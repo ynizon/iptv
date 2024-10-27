@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\iptv]
+@="URL:IPTV Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\iptv\shell]
+
+[HKEY_CLASSES_ROOT\iptv\shell\open]
+
+[HKEY_CLASSES_ROOT\iptv\shell\open\command]
+@="\"C:\\iptv\\iptv_vlc.bat\" \"%1\""

@@ -33,7 +33,7 @@
                                 <i class="fa fa-heart @if ($url->favorite) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                             </div>
                             <div style="float:left;width:200px;">
-                                <a href="#" data-href="/view/{{$url->id}}" class="stream">
+                                <a href="iptv://{{ $url->url }}" data-href="/view/{{$url->id}}" class="stream">
                                     <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
                                     <br/>
                                     {{$url->name}}
@@ -72,7 +72,7 @@
                                             @foreach ($episods as $episod => $url)
                                                 <li>
                                                     <div>
-                                                        <a href="#" data-href="/view/{{$url->id}}" class="stream left" style="display:inline; ">
+                                                        <a href="iptv://{{$url->url}}" data-href="/view/{{$url->id}}" class="stream left" style="display:inline; ">
                                                             Episode {{$episod}}
                                                         </a>
                                                         <i class="fa fa-eye @if ($url->watched) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
@@ -101,7 +101,7 @@
                             <i class="fa fa-heart @if ($url->favorite) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                         </div>
                         <div style="float:left;width:200px;">
-                            <a href="#" data-href="/view/{{$url->id}}" class="stream">
+                            <a href="iptv://{{$url->url}}" data-href="/view/{{$url->id}}" class="stream">
                                 <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
                                 <br/>
                                 {{$url->name}}
@@ -115,12 +115,15 @@
 </div>
 
 <script>
+    /*
+    // Old Method for launching VLC on Server
     $( ".stream" ).on( "click", function() {
         $.ajax({
             type: "GET",
             url: $(this).attr("data-href")
         })
     });
+    */
     $(".nav-link").removeClass("active");
     $(".nav-link:first").addClass("active");
     $(".tab-pane").removeClass("active");

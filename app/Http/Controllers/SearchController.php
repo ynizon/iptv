@@ -90,8 +90,7 @@ class SearchController extends Controller
     public function view(Request $request, $id) {
         $url = Url::findOrFail($id);
 
-        shell_exec("c:\\videolan\\vlc\\vlc.exe $url->url");
-        //https://codesamplez.com/programming/php-html5-video-streaming-tutorial
+        shell_exec("c:\\videolan\\vlc\\vlc.exe --one-instance $url->url");
         return view("view");
     }
 
@@ -102,8 +101,7 @@ class SearchController extends Controller
             $url->favorite = !$url->favorite;
             $url->save();
         }
-echo $name;
-        echo count($urls);
+
         return view("view");
     }
     public function favorite(Request $request, $id) {
