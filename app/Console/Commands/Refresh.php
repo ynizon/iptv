@@ -46,10 +46,6 @@ class Refresh extends Command
      */
     public function handle(DatabaseManager $manager)
     {
-
-        $this->filterUrls();
-        exit();
-
         UrlError::truncate();
         $this->setWalJournalMode(
             $db = $this->getDatabase($manager, 'sqlite')
