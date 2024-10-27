@@ -90,7 +90,7 @@ class SearchController extends Controller
     public function view(Request $request, $id) {
         $url = Url::findOrFail($id);
 
-        shell_exec("c:\\videolan\\vlc\\vlc.exe --one-instance $url->url");
+        shell_exec("c:\\videolan\\vlc\\vlc.exe $url->url");
         return view("view");
     }
 
