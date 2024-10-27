@@ -1,7 +1,7 @@
 ## Prerequis
 Creer un dossier c:\iptv
-Copier le fichier iptv_vlc.bat dedans
-Double cliquer sur iptv.reg 
+Copier le fichier public\iptv_vlc.bat dedans
+Double cliquer sur public\iptv.reg 
 Installer composer (https://getcomposer.org/download/)
 Installer VLC (https://www.videolan.org/index.fr.html)
 
