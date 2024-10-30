@@ -47,7 +47,8 @@ class SearchController extends Controller
         if ($category != '') {
             if ($category == -1) {
                 $urlsTmp->leftJoin('views', 'urls.url', '=', 'views.url')
-                ->where("favorite" , "=", 1)->where("views.user_id","=",Auth::user()->id);
+                ->where("favorite" , "=", 1)->where("views.user_id","=",Auth::user()->id)
+                ->select("urls.*");
             } else {
                 $urlsTmp->where("category" , "=", $category);
             }

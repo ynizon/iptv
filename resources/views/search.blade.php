@@ -30,7 +30,7 @@
                                 <br/>
                                 <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                                 <br/>
-                                <i class="fa fa-heart @if ($url->isFavorite(1))) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                                <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                                 <br/>
                                 <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
                             </div>
@@ -95,25 +95,25 @@
     @endif
     @if (count($urls["channels"]) > 0)
         <div class="tab-pane fade" id="tv" role="tabpanel" aria-labelledby="tv-tab">
-            @foreach ($urls["channels"] as $url)
-                <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
-                    <div style="clear:both">
-                        <div style="float:left;width:20px;">
-                            <br/>
-                            <i class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
-                            <br/>
-                            <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
-                        </div>
-                        <div style="float:left;width:200px;">
-                            <a href="iptv://0\{{$url->url}}" data-id="{{$url->id}}" class="stream">
-                                <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
+            <div class="row">
+                @foreach ($urls["channels"] as $url)
+                    <div class="col-md-2 mb-4 mb-lg-0">
+                        <div style="clear:both">
+                            <div style="float:left;width:20px;">
                                 <br/>
-                                {{$url->name}}
-                            </a>
+                                <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                            </div>
+                            <div style="float:left;width:200px;">
+                                <a href="iptv://0\{{$url->url}}" data-id="{{$url->id}}" class="stream">
+                                    <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
+                                    <br/>
+                                    {{$url->name}}
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
     @endif
 </div>

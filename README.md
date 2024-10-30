@@ -1,5 +1,9 @@
 ## Goal
 
+Web Interface to have your IPTV Server everywhere.
+It launch VLC for viewing the stream and save the history.
+You can filter some categories to avoid their movies in search.
+
 ## Requirements
 - Create a folder c:\iptv
 - Copy file public\iptv_vlc.bat inside
