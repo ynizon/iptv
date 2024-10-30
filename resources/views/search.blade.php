@@ -22,21 +22,23 @@
 <div class="tab-content" id="myTabContent">
     @if (count($urls["movies"]) > 0)
         <div class="tab-pane fade" id="movies" role="tabpanel" aria-labelledby="movies-tab">
-            <div class="row mt-8">
+            <div class="row">
                 @foreach ($urls["movies"] as $url)
                     <div class="col-md-2 mb-4 mb-lg-0">
                         <div style="clear:both">
                             <div style="float:left;width:20px;">
                                 <br/>
-                                <i class="fa fa-eye @if ($url->watched) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
+                                <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                                 <br/>
-                                <i class="fa fa-heart @if ($url->favorite) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                                <i class="fa fa-heart @if ($url->isFavorite(1))) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                                <br/>
+                                <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
                             </div>
                             <div style="float:left;width:200px;">
-                                <a href="iptv://{{ $url->url }}" data-href="/view/{{$url->id}}" class="stream">
+                                <a href="iptv://{{ $url->url }}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream">
                                     <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
                                     <br/>
-                                    {{$url->name}}
+                                    <span id="urlname-{{$url->id}}">{{$url->name}}</span>
                                 </a>
                             </div>
                         </div>
@@ -51,7 +53,7 @@
                 <div class="col-lg-12 col-md-12 mb-4 mb-lg-0 py-2">
                     <h5>{{$serie}}
                         @if (isset($seasons['01']['01']))
-                            <i class="fa fa-heart @if ($seasons['01']['01']->favorite) active @endif"
+                            <i class="fa fa-heart @if ($seasons['01']['01']->isFavorite(1)) active @endif"
                                style="cursor: pointer" onclick="addFavoriteSerie(this, '{{$serie}}')"></i>
                         @endif
                     </h5>
@@ -72,10 +74,12 @@
                                             @foreach ($episods as $episod => $url)
                                                 <li>
                                                     <div>
-                                                        <a href="iptv://{{$url->url}}" data-href="/view/{{$url->id}}" class="stream left" style="display:inline; ">
+                                                        <a href="iptv://{{$url->url}}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream left" style="display:inline; ">
                                                             Episode {{$episod}}
                                                         </a>
-                                                        <i class="fa fa-eye @if ($url->watched) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
+                                                        <span id="urlname-{{$url->id}}">{{$url->name}}</span>
+                                                        <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
+                                                        <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                                                     </div>
                                                 </li>
                                             @endforeach
@@ -96,12 +100,12 @@
                     <div style="clear:both">
                         <div style="float:left;width:20px;">
                             <br/>
-                            <i class="fa fa-eye @if ($url->watched) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
+                            <i class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                             <br/>
-                            <i class="fa fa-heart @if ($url->favorite) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                            <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                         </div>
                         <div style="float:left;width:200px;">
-                            <a href="iptv://{{$url->url}}" data-href="/view/{{$url->id}}" class="stream">
+                            <a href="iptv://0\{{$url->url}}" data-id="{{$url->id}}" class="stream">
                                 <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
                                 <br/>
                                 {{$url->name}}
@@ -115,15 +119,9 @@
 </div>
 
 <script>
-    /*
-    // Old Method for launching VLC on Server
-    $( ".stream" ).on( "click", function() {
-        $.ajax({
-            type: "GET",
-            url: $(this).attr("data-href")
-        })
+    $( ".stream" ).on( "click", function(button) {
+        addCounter($(this).attr("data-id"))
     });
-    */
     $(".nav-link").removeClass("active");
     $(".nav-link:first").addClass("active");
     $(".tab-pane").removeClass("active");

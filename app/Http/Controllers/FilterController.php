@@ -13,7 +13,7 @@ class FilterController extends Controller
      */
     public function index()
     {
-        $filters = Filter::all();
+        $filters = Filter::orderBy("name")->get();
         return view("filters/index", compact("filters"));
     }
 
@@ -80,7 +80,7 @@ class FilterController extends Controller
     {
         $filter->delete();
         return redirect()->route('filters.index')
-            ->with('success', __('Filter deleted successfully'));
+            ->with('success', __('Filter deleted successfully.'));
     }
 
     /**

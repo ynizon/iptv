@@ -1,40 +1,82 @@
-<x-app>
-    <div class="col-md-2">
-        <ul>
-            <li><a href="/playlists" style="display:inline"><i class="fa fa-settings"></i> PLAYLISTS</a> -
-                <a href="/filters"  style="display:inline">FILTRES</a></li>
-            <li class="category" style="cursor: pointer"
-                data-category="-1"><i class="fa fa-heart"></i> FAVORIS</li>
-            @foreach ($categories as $category)
-                <li class="category" style="cursor: pointer"
-                    data-category="{{$category}}">@if ($category == '') TOUS @else {{$category}} @endif</li>
-            @endforeach
-        </ul>
-    </div>
-    <div class="col-md-10">
-        <div class="row mt-5">
-            <div class="col-md-5 mx-auto">
-                <div class="input-group">
-                    @foreach (\App\Http\Controllers\SearchController::FILTERS as $format => $checked)
-                        <div class="form-check px-5">
-                            <input class="form-check-input formats" {{$checked}}
-                            name="format[]" type="checkbox" id="chk{{$format}}" value="{{$format}}">
-                            <label class="form-check-label" for="chk{{$format}}">{{$format}}</label>
+<x-guest-layout>
+    <main class="main-content  mt-0">
+        <section>
+            <div class="page-header min-vh-100">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="position-absolute w-40 top-0 start-0 h-100 d-md-block d-none">
+                                <div class="oblique-image position-absolute d-flex fixed-top ms-auto h-100 z-index-0 bg-cover me-n8"
+                                     style="background-image:url('/assets/img/image-sign-up.jpg')">
+                                    <div class="my-auto text-start max-width-350 ms-7">
+                                        <h1 class="mt-3 text-white font-weight-bolder">{{__("Screenshots")}}</h1>
+                                        <p class="text-white text-lg mt-4 mb-4"> </p>
+
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-group d-flex">
+                                                <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+                                                    <div class="carousel-indicators">
+                                                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                                                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                                                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                                                    </div>
+                                                    <div class="carousel-inner">
+
+                                                        @foreach ($pictures as $picture)
+                                                            <div class="carousel-item {{$loop->index == 0 ? 'active' : ''}}">
+                                                                <img src="/screenshots/{{basename($picture)}}" class="d-block w-100" alt="screenshot">
+                                                            </div>
+                                                        @endforeach
+
+                                                    </div>
+                                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+                                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                        <span class="visually-hidden">{{__("Previous")}}</span>
+                                                    </button>
+                                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+                                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                        <span class="visually-hidden">{{__("Next")}}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-start position-absolute fixed-bottom ms-7">
+                                        <h6 class="text-white text-sm mb-5"></h6>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    @endforeach
+                        <div class="col-md-4 d-flex flex-column mx-auto">
+                            <div class="card card-plain mt-8-old">
+                                <div class="card-header pb-0 text-left bg-transparent">
+                                    <h3 class="font-weight-black text-dark display-6">{{config("app.name")}}</h3>
+                                    <br/>
+                                    <p class="mb-0">est une application qui vous permet de garder une trace de tout :
+                                        <br/>
+                                    <ul>
+                                        <li>factures de garagistes, et rappels d'entretiens pour votre voiture</li>
+                                        <li>factures de vétérinaires, et rappels de vaccin de vos animaux</li>
+                                        <li>vos dépenses de santé et informations liées</li>
+                                        <li>des dépenses partagées (avec vos proches)...</li>
+                                    </ul>
+                                    </p>
+                                    <p class="mb-0">
+                                        DEMO: Vous pouvez essayer en vous connectant avec les identifiants admin@admin.com / admin
+                                    </p>
+                                    <br/>
+
+                                    <a class="btn btn-primary text-white" href="{{route('login')}}")>{{__("Login")}}</a>
+                                </div>
+                                <div class="card-body">
+                                    <i class="fa fa-github pad"></i><a href="https://github.com/ynizon/iptv">https://github.com/ynizon/iptv</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </section>
+    </main>
 
-            <div class="row mt-5">
-                <div class="col-md-5 mx-auto">
-                    <input class="form-control border rounded-pill" type="search" placeholder="recherche"
-                           id="search" minlength="3">
-                    <input id="category" value="" type="hidden"/>
-                </div>
-            </div>
-
-            <div id="list">
-            </div>
-        </div>
-    </div>
-</x-app>
+</x-guest-layout>

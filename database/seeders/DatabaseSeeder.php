@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         'DZ/MA/TN',
         'ITALIANA',
         'ALLEMANDES',
+        'Bollywood',
         'BELGES',
         'RAMADAN',
         'CANADA',
@@ -39,6 +40,39 @@ class DatabaseSeeder extends Seeder
         'TURQUES',
         'MAGHREB',
         'AFRIQUE',
+        'CZECH Republic',
+        'BRAZIL',
+        'BULGARIA',
+        'ARMENIA',
+        'ALBANIA',
+        'ALGERIA',
+        'DENMARK',
+        'KURDISTAN',
+        'LATINO',
+        'MEXICO',
+        'MOROCCO',
+        'NETHERLAND',
+        'PAKISTAN',
+        'NORWAY',
+        'POLAND',
+        'PORTUGAL',
+        'ROMANIA',
+        'RUSSIA & UKRAINE',
+        'SPAIN',
+        'SWEDEN',
+        'TUNISIA',
+        'TURKEY',
+        'INDIA',
+        'IRAN',
+        'ISLAM',
+        'ITALIA',
+        'GERMANY',
+        'GREECE',
+        'HUNGARY',
+        'BELGIUM',
+        'CARAIBES',
+        'EX-YU',
+        'OSN'
     ];
 
     /**
@@ -46,16 +80,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Admin',
+            'formats' => '["HD","UHD","FHD"]',
+            'email' => env('ADMIN_USER','admin@admin.com'),
+            'password'=>bcrypt(env('ADMIN_PASSWORD',"admin")),
         ]);
 
         DB::table('playlists')->insert([
             'name' => 'IPTV',
-            'url' => "http://*.m3U",
+            'url' => env("M3U","http://yourwebsite/get.php?username=XXX&password=YYY&type=m3u_plus&output=ts.m3U"),
         ]);
 
         foreach ($this->filters as $filter)

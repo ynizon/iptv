@@ -78,6 +78,6 @@ class PlaylistController extends Controller
     {
         $playlist->delete();
         return redirect()->route('playlists.index')
-            ->with('success', __('Playlist deleted successfully'));
+            ->with('success', __('Playlist deleted successfully.'));
     }
 }

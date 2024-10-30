@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -20,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'formats',
     ];
 
     /**
@@ -43,5 +45,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function views(): HasMany
+    {
+        return $this->hasMany(View::class);
+    }
+
+    public function getFormats()
+    {
+        //Return the difference betweend user formats and all formats to hide this kind of movies
+        return json_encode(array_diff(\App\Http\Controllers\SearchController::FILTERS, json_decode($this->formats)));
     }
 }

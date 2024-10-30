@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Url;
+use App\Models\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
 {
-    public const FILTERS = ["HD" => "", "SD" => "checked", "UHD" => "", "FHD" => ""];
+    public const FILTERS = ["HD", "SD", "UHD" , "FHD"];
 
-    public function index(){
-
+    public function dashboard(){
         $categories = [];
         $urls = DB::table('urls')->select('category')->where("filter","=",0)
             ->distinct()->orderBy("category")->get();
@@ -20,7 +21,20 @@ class SearchController extends Controller
             $categories[] = $url->category;
         }
 
-        return view('welcome', compact("categories"));
+        return view('dashboard', compact("categories"));
+    }
+
+    public function settings(Request $request) {
+        if ($request->input('formats') == ''){
+            return view('settings');
+        } else {
+            $user = Auth::user();
+            $user->formats = json_encode($request->input('formats'));
+            $user->save();
+
+            return redirect()->route('settings')
+                ->with('success', __('Formats updated successfully.'));
+        }
     }
 
     public function search(Request $request) {
@@ -32,7 +46,8 @@ class SearchController extends Controller
 
         if ($category != '') {
             if ($category == -1) {
-                $urlsTmp->where("favorite" , "=", 1);
+                $urlsTmp->leftJoin('views', 'urls.url', '=', 'views.url')
+                ->where("favorite" , "=", 1)->where("views.user_id","=",Auth::user()->id);
             } else {
                 $urlsTmp->where("category" , "=", $category);
             }
@@ -98,23 +113,71 @@ class SearchController extends Controller
         $name = $request->input("name");
         $urls = Url::where("serie","=","1")->where("name","like",$name."%")->get();
         foreach ($urls as $url){
-            $url->favorite = !$url->favorite;
-            $url->save();
+            $view = View::firstOrNew(
+                ['url' =>  $url->url, 'user_id' => 1],
+                ['url' =>  $url->url, 'user_id' => 1],
+            );
+            $view->favorite = !$view->favorite;
+            $view->save();
         }
 
         return view("view");
     }
     public function favorite(Request $request, $id) {
         $url = Url::findOrFail($id);
-        $url->favorite = !$url->favorite;
-        $url->save();
+        $view = View::firstOrNew(
+            ['url' =>  $url->url, 'user_id' => 1],
+            ['url' =>  $url->url, 'user_id' => 1],
+        );
+        $view->favorite = !$view->favorite;
+        $view->save();
         return view("view");
     }
 
     public function watched(Request $request, $id) {
         $url = Url::findOrFail($id);
-        $url->watched = !$url->watched;
-        $url->save();
+        $view = View::firstOrNew(
+            ['url' =>  $url->url, 'user_id' => 1],
+            ['url' =>  $url->url, 'user_id' => 1],
+        );
+
+        $view->watched = !$view->watched;
+        $view->save();
         return view("view");
+    }
+
+    public function forceWatched(Request $request, $id) {
+        $url = Url::findOrFail($id);
+        $view = View::firstOrNew(
+            ['url' =>  $url->url, 'user_id' => 1],
+            ['url' =>  $url->url, 'user_id' => 1],
+        );
+
+        $view->watched = 1;
+        $view->counter = 0;
+        $view->save();
+        return view("view");
+    }
+
+    public function counter(Request $request, $id, $counter) {
+        if ($counter > 0) {
+            $url = Url::findOrFail($id);
+            $view = View::firstOrNew(
+                ['url' => $url->url, 'user_id' => 1],
+                ['url' => $url->url, 'user_id' => 1],
+            );
+
+            $view->counter = $counter;
+            $view->save();
+        }
+        return view("view");
+    }
+
+    public function iptvreg() {
+        $filePath = public_path('iptv/iptv.reg');
+
+        return response()->download($filePath, 'iptv.reg', [
+            'Content-Type' => 'application/octet-stream',
+        ]);
     }
 }

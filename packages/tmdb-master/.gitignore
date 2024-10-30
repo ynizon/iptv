@@ -1,0 +1,5 @@
+/vendor/
+/logs/
+/docs/
+/build/
+.php_cs.cache

@@ -17,14 +17,17 @@ return new class extends Migration
             $table->string('name')->index();
             $table->string('picture');
             $table->string('category');
-            $table->integer('favorite')->default(0);
             $table->integer('tvchannel')->default(0);
             $table->integer('serie')->default(0);
             $table->integer('movie')->default(0);
             $table->integer('season')->default(0);
             $table->integer('episod')->default(0);
             $table->integer('filter')->default(0);
-            $table->integer('watched')->default(0);
+            $table->integer('note')->default(-1);
+            $table->integer('votes')->default(-1);
+            $table->integer('year')->default(0);
+            $table->string('imdb')->nullable();
+
             $table->timestamps();
             $table->unsignedBigInteger('playlist_id');
             $table->foreign('playlist_id')->references('id')->on('playlists')->onDelete('cascade');

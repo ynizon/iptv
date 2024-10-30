@@ -1,0 +1,46 @@
+{
+    "name": "vfalies/tmdb",
+    "description": "A PHP Wrapper for The Internet Movie Database API",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://vfac.fr/projects/tmdb",
+    "support":
+    {
+        "source": "https://github.com/vfalies/tmdb",
+        "email": "vincent@vfac.fr",
+        "issues": "https://github.com/vfalies/tmdb/issues"
+    },
+    "readme": "./README.md",
+    "authors": [
+        {
+            "name": "Vincent Faliès",
+            "email": "vincent@vfac.fr"
+        }
+    ],
+    "require": {
+        "php": ">= 7.1",
+        "psr/log": "~1.1.3",
+        "guzzlehttp/guzzle": ">= 6.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": ">=7.0 <9.5.4",
+        "friendsofphp/php-cs-fixer": ">=2.15.3",
+        "monolog/monolog": ">1.25.1"
+    },
+    "suggest": {
+        "monolog/monolog": "Allows more advanced logging of the application flow"
+    },
+    "autoload": {
+        "psr-4": {
+            "VfacTmdb\\": "src/VfacTmdb"
+        }
+    },
+    "scripts": {
+            "install-hook": "chmod +x pre-commit.sh && cp pre-commit.sh .git/hooks/pre-commit",
+            "pre-autoload-dump": "composer install-hook",
+            "test": "vendor/bin/phpunit",
+            "coverage": "vendor/bin/phpunit --coverage-html=logs/build/coverage",
+            "view-coverage": "open logs/build/coverage/index.html",
+            "clean": "rm -rf logs/build/*"
+    }
+}
