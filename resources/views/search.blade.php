@@ -78,7 +78,7 @@
                                                             Episode {{$episod}}
                                                         </a>
                                                         <span id="urlname-{{$url->id}}">{{$url->name}}</span>
-                                                        <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
+                                                        <span class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</span>
                                                         <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                                                     </div>
                                                 </li>
