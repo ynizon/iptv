@@ -32,10 +32,14 @@
                                 <br/>
                                 <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                                 <br/>
+                                @if ($url->note != '' && $url->note != 'N/A' && $url->note != '-1')
+                                    <br/>
+                                    {{$url->note}}
+                                @endif
                                 <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
                             </div>
                             <div style="float:left;width:200px;">
-                                <a href="iptv://{{ $url->url }}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream">
+                                <a id="ahref-{{$url->id}}" href="iptv://{{ $url->url }}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream">
                                     <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
                                     <br/>
                                     <span id="urlname-{{$url->id}}">{{$url->name}}</span>
@@ -74,7 +78,7 @@
                                             @foreach ($episods as $episod => $url)
                                                 <li>
                                                     <div>
-                                                        <a href="iptv://{{$url->url}}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream left" style="display:inline; ">
+                                                        <a id="ahref-{{$url->id}}" href="iptv://{{$url->url}}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream left" style="display:inline; ">
                                                             Episode {{$episod}}
                                                         </a>
                                                         <span id="urlname-{{$url->id}}">{{$url->name}}</span>

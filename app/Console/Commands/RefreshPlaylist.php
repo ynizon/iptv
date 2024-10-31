@@ -19,9 +19,13 @@ class RefreshPlaylist extends Command
         " TV ",
         "FR SPORTS (France)",
         "DAZN",
+        "CANAL+",
+        ".SPORTS",
+        "-SPORTS",
         "EUROSPORT",
         "NBA PASS",
         "CHAINES.",
+        "CHANNELS",
     ];
 
     /**

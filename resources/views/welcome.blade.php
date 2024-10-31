@@ -52,24 +52,24 @@
                                 <div class="card-header pb-0 text-left bg-transparent">
                                     <h3 class="font-weight-black text-dark display-6">{{config("app.name")}}</h3>
                                     <br/>
-                                    <p class="mb-0">est une application qui vous permet de garder une trace de tout :
-                                        <br/>
-                                    <ul>
-                                        <li>factures de garagistes, et rappels d'entretiens pour votre voiture</li>
-                                        <li>factures de vétérinaires, et rappels de vaccin de vos animaux</li>
-                                        <li>vos dépenses de santé et informations liées</li>
-                                        <li>des dépenses partagées (avec vos proches)...</li>
-                                    </ul>
-                                    </p>
-                                    <p class="mb-0">
-                                        DEMO: Vous pouvez essayer en vous connectant avec les identifiants admin@admin.com / admin
+                                    <p class="mb-0">Web Interface to have your IPTV Server everywhere.
+                                        <br/><br/>
+                                        Features:<br/>
+                                        <ul>
+                                            <li> use VLC for viewing the stream</li>
+                                            <li> added multiple playlists</li>
+                                            <li> set your favorites movies, channels, series</li>
+                                            <li> save the history by user</li>
+                                            <li> memorize your position</li>
+                                            <li> filter some categories to avoid this kind of movies in search.</li>
+                                        </ul>
                                     </p>
                                     <br/>
 
                                     <a class="btn btn-primary text-white" href="{{route('login')}}")>{{__("Login")}}</a>
-                                </div>
-                                <div class="card-body">
-                                    <i class="fa fa-github pad"></i><a href="https://github.com/ynizon/iptv">https://github.com/ynizon/iptv</a>
+                                    <div class="card-body">
+                                        <i class="fa fa-github pad"></i><a href="https://github.com/ynizon/iptv">https://github.com/ynizon/iptv</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

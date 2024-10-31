@@ -45,12 +45,22 @@ class SearchController extends Controller
         $urlsTmp = Url::where("name", "like", "%".$query."%")->where("filter","=",0);
 
         if ($category != '') {
+            //Favorites
             if ($category == -1) {
                 $urlsTmp->leftJoin('views', 'urls.url', '=', 'views.url')
                 ->where("favorite" , "=", 1)->where("views.user_id","=",Auth::user()->id)
                 ->select("urls.*");
             } else {
-                $urlsTmp->where("category" , "=", $category);
+                //Recent
+                if ($category == -2) {
+                    $urlsTmp->leftJoin('views', 'urls.url', '=', 'views.url')
+                        ->where("views.user_id","=",Auth::user()->id)
+                        ->select("urls.*")
+                        ->orderBy("read_at","desc");
+                } else {
+                    //Category
+                    $urlsTmp->where("category" , "=", $category);
+                }
             }
         }
         $urlsTmp = $urlsTmp->orderBy("name")->limit(3000)->get();
@@ -169,6 +179,7 @@ class SearchController extends Controller
             );
 
             $view->counter = $counter;
+            $view->read_at = now();
             $view->save();
         }
         return view("view");
@@ -178,6 +189,22 @@ class SearchController extends Controller
         $filePath = public_path('iptv/iptv.reg');
 
         return response()->download($filePath, 'iptv.reg', [
+            'Content-Type' => 'application/octet-stream',
+        ]);
+    }
+
+    public function iptvsh() {
+        $filePath = public_path('iptv/iptv_vlc.sh');
+
+        return response()->download($filePath, 'iptv_vlc.sh', [
+            'Content-Type' => 'application/octet-stream',
+        ]);
+    }
+
+    public function iptvdesktop() {
+        $filePath = public_path('iptv/iptv.desktop');
+
+        return response()->download($filePath, 'iptv.desktop', [
             'Content-Type' => 'application/octet-stream',
         ]);
     }

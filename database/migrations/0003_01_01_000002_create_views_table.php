@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('watched')->default(0);
             $table->integer('counter')->default(0);
             $table->integer('favorite')->default(0);
-
+            $table->timestamp('read_at')->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('url')->references('url')->on('urls')->onDelete('cascade');
         });

@@ -171,8 +171,16 @@
             urlId = id;
 
             myInterval = window.setInterval(
-                function (){
+                function ()
+                {
                     let newCounter = parseInt($("#counter-"+id).attr('data-min')) + 1;
+
+                    let updatedUrl = document.getElementById("ahref-"+urlId).href.replace(/#(\d+)$/, (match, p1) => {
+                        let newValue = parseInt(p1, 10) + 60;
+                        return `#${newValue}`;
+                    });
+                    document.getElementById("ahref-"+urlId).href = updatedUrl;
+
                     $.ajax({
                         type: "GET",
                         url: "/counter/"+id+"/"+newCounter,
@@ -239,7 +247,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" onclick="setPaused()" class="btn btn-primary">Pause</button>
-                    <button type="button" onclick="setWatched()" class="btn btn-primary">Terminé</button>
+                    <button type="button" onclick="setWatched()" class="btn btn-primary">{{__("Ended")}}</button>
                 </div>
             </div>
         </div>

@@ -30,6 +30,12 @@
                     </div>
                 </div>
             </div>
+
+            <script>
+                $(document).ready(function() {
+                   $("#recent").click();
+                });
+            </script>
             <x-app.footer />
         </div>
     </main>

@@ -40,7 +40,8 @@ class RefreshInfo extends Command
     public function handle(DatabaseManager $manager, Sqlite $sqlite)
     {
         $options = ['language'=>'fr-FR'];
-
+        //@TODO
+        /*
         $sqlite->setWalJournalMode(
             $db = $sqlite->getDatabase($manager, 'sqlite')
         );
@@ -56,6 +57,6 @@ class RefreshInfo extends Command
             echo $response->getTitle()."\n";
         }
         exit();
-
+        */
     }
 }

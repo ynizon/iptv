@@ -1,8 +1,15 @@
-## Goal
+## Description
 
 Web Interface to have your IPTV Server everywhere.
-It launch VLC for viewing the stream and save the history.
-You can filter some categories to avoid their movies in search.
+
+Features:
+- use VLC for viewing the stream 
+- added multiple playlists
+- set your favorites movies, channels, series
+- save the history by user
+- memorize your position
+- filter some categories to avoid this kind of movies in search.
+- supported languages : en / fr
 
 ## Requirements
 - Create a folder c:\iptv
@@ -18,5 +25,21 @@ You can filter some categories to avoid their movies in search.
 
 Add your M3U playlist in .env on the M3U variable, 
 then launch commands:
-- php artisan migrate --seed
-- php artisan refresh:playlist
+````
+php artisan migrate --seed
+php artisan refresh:playlist
+````
+##  IMDB Notation
+
+You can set your omdb api key (https://www.omdbapi.com/) in your .env (OMDB_KEY)
+to get movies informations like notes, votes, but request are limited...
+Then launch : 
+````
+php artisan refresh:omdb
+````
+
+## Updating
+Launch this commande to refresh your library:
+````
+php artisan refresh:playlist
+````

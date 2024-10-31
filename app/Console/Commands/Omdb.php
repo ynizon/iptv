@@ -2,11 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Filter;
-use App\Models\Playlist;
+use App\Helpers\Sqlite;
 use App\Models\Url;
 use App\Models\UrlBackup;
-use App\Models\UrlError;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\ConnectionInterface;
@@ -21,7 +19,7 @@ class Omdb extends Command
      *
      * @var string
      */
-    protected $signature = 'app:omdb';
+    protected $signature = 'refresh:omdb';
 
     /**
      * The console command description.
@@ -33,87 +31,64 @@ class Omdb extends Command
     /**
      * Execute the console command.
      */
-    public function handle(DatabaseManager $manager)
+    public function handle(DatabaseManager $manager, Sqlite $sqlite)
     {
         $nbError = 0;
-        $this->setWalJournalMode(
-            $db = $this->getDatabase($manager, 'sqlite')
+        $sqlite->setWalJournalMode(
+            $db = $sqlite->getDatabase($manager, 'sqlite')
         );
         $startTime = microtime(true);
         $this->info('Refresh OMDB');
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  // Récupère la réponse sans l'afficher
+        curl_setopt($ch, CURLOPT_HEADER, false);           // Inclut les en-têtes dans la sortie
+        curl_setopt($ch, CURLOPT_NOBODY, false);           // N'inclut que les en-têtes dans la réponse
+
+        //$bar = $this->output->createProgressBar(Url::whereNull("imdb")->where("tvchannel","!=","1")->where("filter","=",0)->count());
+        $nb = 0;
         foreach (Url::whereNull("imdb")->where("tvchannel","!=","1")->where("filter","=",0)->get() as $url) {
-            $this->refreshImdb($url);
+//            $bar->advance();
+            $this->refreshOmdb($ch, $url, $nb);
+            $nb++;
         }
+
+        curl_close($ch);
 
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         $this->info("Finished : " . number_format($executionTime, 2) . " sec with ". $nbError . " errors");
     }
 
-    protected function refreshImdb(Url $url)
+    protected function refreshOmdb($ch, Url $url, $nb)
     {
-        $infos = explode(" (", $url->name);
-        $urlImdb = "https://www.omdbapi.com/?apikey=".env("OMDB_KEY")."&t=".urlencode($infos[0]);
-
-        $content = '';
         try{
-            $content = file_get_contents($urlImdb);
+            $infos = explode(" (", $url->name);
+            $urlImdb = "https://www.omdbapi.com/?apikey=".env("OMDB_KEY")."&t=".urlencode($infos[0]);
+
+            curl_setopt($ch, CURLOPT_URL, $urlImdb);
+            $content = curl_exec($ch);
+            $returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $this->info($url->id. " : ". $urlImdb . " -> ".$returnCode);
+
             $json = json_decode($content, true);
-            if (isset($json['Year'])){
-                $url->year = $json['Year'];
-            }
-            if (isset($json['Ratings']['imdbRating'])) {
-                $url->note = $json['Ratings']['imdbRating'];
-            }
-            if (isset($json['Ratings']['imdbVotes'])) {
-                $url->votes = $json['Ratings']['imdbVotes'];
+            if (200 == $returnCode) {
+                if (isset($json['Year'])){
+                    $url->year = $json['Year'];
+                }
+                if (isset($json['imdbRating'])) {
+                    $url->note = $json['imdbRating'];
+                }
+                if (isset($json['imdbVotes'])) {
+                    $url->votes = str_replace(",","",$json['imdbVotes']);
+                }
+                $url->imdb = $content;
+                $url->save();
+            } else {
+                $this->error($nb . " urls updated : ". $json['Error']);
+                exit();
             }
         }catch (\Exception $e){
             //Do nothing
         }
-        $url->imdb = $content;
-        $url->save();
-    }
-
-    /**
-     * Returns the Database Connection
-     *
-     * @param \Illuminate\Database\DatabaseManager $manager
-     * @param string $connection
-     * @return SQLiteConnection
-     * @throws Exception
-     */
-    protected function getDatabase(DatabaseManager $manager, string $connection)
-    {
-        $db = $manager->connection($connection);
-
-        // We will throw an exception if the database is not SQLite
-        if(!$db instanceof SQLiteConnection) {
-            throw new Exception("The '$connection' connection must be sqlite, [{$db->getDriverName()}] given.");
-        }
-
-        return $db;
-    }
-
-    /**
-     * Sets the Journal Mode to WAL
-     *
-     * @param  \Illuminate\Database\ConnectionInterface $connection
-     * @return bool
-     */
-    protected function setWalJournalMode(ConnectionInterface $connection)
-    {
-        return $connection->statement('PRAGMA journal_mode=WAL;');
-    }
-
-    /**
-     * Returns the current Journal Mode of the Database Connection
-     *
-     * @param  \Illuminate\Database\ConnectionInterface $connection
-     * @return string
-     */
-    protected function getJournalMode(ConnectionInterface $connection)
-    {
-        return data_get($connection->select(new Expression('PRAGMA journal_mode')), '0.journal_mode');
     }
 }

@@ -53,10 +53,26 @@
                         <hr/>
                         Windows:
                         <ul>
-                            <li>Install <a class="di"  href="https://www.videolan.org/vlc/index.fr.html">VLC</a></li>
-                            <li>Launch this file  <a class="di" href="/iptvreg">iptv.reg</a></li>
+                            <li>Install <a class="di" href="https://www.videolan.org/vlc/index.fr.html">VLC</a></li>
+                            <li>Launch this file  <a class="di" href="/download/iptvreg">iptv.reg</a></li>
                             <li>Create a folder c:\IPTV with this file inside: <a class="di" href="/iptv/iptv_vlc.bat">iptv_vlc.bat</a></li>
                         </ul>
+                        <hr/>
+                        Linux:
+                        <ul>
+                            <li>
+                                Copy this file <a class="di" href="/download/iptvdesktop">iptv.desktop</a> into ~/.local/share/applications/
+                            </li>
+                            <li>
+                                Copy this file <a class="di" href="/download/iptvsh">iptv_vlc.sh</a> into /usr/local/bin
+                            </li>
+                            <li>
+                                In your terminal launch: xdg-mime default iptv.desktop x-scheme-handler/iptv_vlc.sh
+                            </li>
+                        </ul>
+                        <hr/>
+                        Note:<br/>
+                        If you can't access to your iptv server, try another dns or update your host file
                     </div>
                 </div>
             </div>

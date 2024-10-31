@@ -22,7 +22,10 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/iptvreg', [SearchController::class, 'iptvreg']);
+Route::get('/download/iptvreg', [SearchController::class, 'iptvreg']);
+Route::get('/download/iptvsh', [SearchController::class, 'iptvsh']);
+Route::get('/download/iptvdesktop', [SearchController::class, 'iptvdesktop']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -284,7 +284,8 @@
     "Attachment": "Pièce jointe",
     "Add Attachment": "Ajouter une pièce jointe",
     "Attachment deleted successfully": "Pièce jointe supprimée",
-    "All":"Toutes",
+    "All":"Tous",
+    "Favorites": "Favoris",
     "Users": "Utilisateurs",
     "Family": "Famille",
     "Group created successfully.": "Groupe créé avec succès.",
@@ -313,5 +314,7 @@
     "Playlist deleted successfully.": "Playlist supprimée avec succès",
     "To refresh playlists, use": "Pour rafraichir les playlists, lancez la commande",
     "Show only formats": "Voir seulement les formats",
-    "Formats updated successfully.": "Formats mis à jour avec succès."
+    "Formats updated successfully.": "Formats mis à jour avec succès.",
+    "Recent": "Récemment",
+    "Ended": "Terminé"
 }
