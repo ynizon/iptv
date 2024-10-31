@@ -29,7 +29,7 @@ then launch commands:
 php artisan migrate --seed
 php artisan refresh:playlist
 ````
-##  IMDB Notation
+##  OMDB Notation
 
 You can set your omdb api key (https://www.omdbapi.com/) in your .env (OMDB_KEY)
 to get movies informations like notes, votes, but request are limited...
@@ -43,3 +43,9 @@ Launch this commande to refresh your library:
 ````
 php artisan refresh:playlist
 ````
+
+## Screenshots
+
+<img src="public/screenshots/1.jpg">
+<img src="public/screenshots/2.jpg">
+<img src="public/screenshots/3.jpg">

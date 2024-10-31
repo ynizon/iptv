@@ -70,6 +70,7 @@ class SearchController extends Controller
                 "channels" => [],
             ];
 
+        $pictures = [];
         foreach ($urlsTmp as $url) {
             $ok = true;
             foreach ($formats as $format) {
@@ -97,6 +98,7 @@ class SearchController extends Controller
                     }
                     if (!isset($urls["series"][$name]))  {
                         $urls["series"][$name] = [];
+                        $pictures[$name] = $url->picture;
                     }
                     if (!isset($urls["series"][$name][$season]))  {
                         $urls["series"][$name][$season] = [];
@@ -110,7 +112,7 @@ class SearchController extends Controller
             }
         }
 
-        return view("search", compact("urls"));
+        return view("search", compact("urls", "pictures"));
     }
 
     public function view(Request $request, $id) {
