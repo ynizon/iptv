@@ -29,6 +29,9 @@ then launch commands:
 php artisan migrate --seed
 php artisan refresh:playlist
 ````
+
+### Don't forget to go to the settings page to get the method to open movies link for linux or windows.
+
 ##  OMDB Notation
 
 You can set your omdb api key (https://www.omdbapi.com/) in your .env (OMDB_KEY)
