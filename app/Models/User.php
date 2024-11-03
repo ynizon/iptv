@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'formats',
+        'admin',
     ];
 
     /**
@@ -50,6 +51,10 @@ class User extends Authenticatable
     public function views(): HasMany
     {
         return $this->hasMany(View::class);
+    }
+
+    public function isAdmin(){
+        return $this->admin;
     }
 
     public function getFormats()

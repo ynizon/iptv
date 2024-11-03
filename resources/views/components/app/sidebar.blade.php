@@ -13,6 +13,7 @@
                             this.closest('form').submit();">
                     <i class="fa fa-sign-out-alt" style="padding-left:10px;color:#ffffff"></i>
                 </a>
+            </form>
         </div>
     </div>
     <div class="collapse navbar-collapse px-4  w-auto " id="sidenav-collapse-main">

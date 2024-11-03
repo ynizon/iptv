@@ -311,10 +311,17 @@
     "New playlist": "Nouvelle playlist",
     "Playlist created successfully.": "Playlist créé avec succès",
     "Playlist updated successfully.": "Playlist modifiée avec succès",
-    "Playlist deleted successfully.": "Playlist supprimée avec succès",
+    "Playlist deleted successfully.": "Playlist supprimée avec succès.",
     "To refresh playlists, use": "Pour rafraichir les playlists, lancez la commande",
     "Show only formats": "Voir seulement les formats",
     "Formats updated successfully.": "Formats mis à jour avec succès.",
     "Recent": "Récemment",
-    "Ended": "Terminé"
+    "Ended": "Terminé",
+    "Channels": "Chaines",
+    "Series": "Séries",
+    "Movies":"Films",
+    "New user": "Nouvel utilisateur",
+    "User deleted successfully.": "Utilisateur supprimé avec succès.",
+    "User updated successfully.": "Utilisateur modifié avec succès.",
+    "User created successfully.": "Utilisateur créé avec succès."
 }

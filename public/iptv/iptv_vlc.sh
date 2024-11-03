@@ -15,4 +15,4 @@ video_url="${clean_url%%#*}"
 start_time="${full_url##*#}"
 
 # Lancer VLC avec l'URL de la vidéo et le temps de démarrage
-vlc "$video_url" --start-time="$start_time"
+vlc "$video_url" --fullscreen --start-time="$start_time"

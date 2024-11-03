@@ -27,6 +27,10 @@
                             <a class="tl" href="/playlists">{{__("Playlists")}}</a>
                             <br/>
                             <a class="tl" href="/filters">{{__("Filters")}}</a>
+                            @if (Auth::user()->isAdmin())
+                                <br/>
+                                <a class="tl" href="/users">{{__("Users")}}</a>
+                            @endif
                         </div>
                         <hr/>
                         <div class="row">

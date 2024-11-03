@@ -5,6 +5,7 @@ use App\Http\Controllers\FilterController;
 use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::resource('/users', UserController::class);
     Route::get('/settings', [SearchController::class, 'settings'])->name('settings');
     Route::post('/settings', [SearchController::class, 'settings'])->name('settings');
     Route::resource('/playlists', PlaylistController::class);

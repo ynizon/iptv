@@ -2,19 +2,19 @@
     @if (count($urls["movies"]) > 0)
         <li class="nav-item">
             <button class="nav-link" id="movies-tab" data-bs-toggle="tab" data-bs-target="#movies" type="button"
-                    role="tab" aria-controls="movies" aria-selected="true">Films ({{count($urls["movies"])}})</button>
+                    role="tab" aria-controls="movies" aria-selected="true">{{__("Movies")}} ({{count($urls["movies"])}})</button>
         </li>
     @endif
     @if (count($urls["series"]) > 0)
         <li class="nav-item">
             <button class="nav-link" id="series-tab" data-bs-toggle="tab" data-bs-target="#series" type="button"
-                    role="tab" aria-controls="series" aria-selected="true">Séries ({{count($urls["series"])}})</button>
+                    role="tab" aria-controls="series" aria-selected="true">{{__("Series")}} ({{count($urls["series"])}})</button>
         </li>
     @endif
     @if (count($urls["channels"]) > 0)
         <li class="nav-item">
             <button class="nav-link" id="tv-tab" data-bs-toggle="tab" data-bs-target="#tv" type="button" role="tab"
-                    aria-controls="tv" aria-selected="true">TV ({{count($urls["channels"])}})</button>
+                    aria-controls="tv" aria-selected="true">{{__("Channels")}} ({{count($urls["channels"])}})</button>
         </li>
     @endif
 </ul>

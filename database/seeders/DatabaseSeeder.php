@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -82,6 +81,7 @@ class DatabaseSeeder extends Seeder
     {
         User::factory()->create([
             'name' => 'Admin',
+            'admin' => true,
             'formats' => '["HD","UHD","FHD"]',
             'email' => env('ADMIN_USER','admin@admin.com'),
             'password'=>bcrypt(env('ADMIN_PASSWORD',"admin")),
