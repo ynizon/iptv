@@ -1,6 +1,6 @@
 @foreach($warnings as $warning)
     <div class="alert alert-warning" role="alert">
-        <i class="fa fa-warning"></i>&nbsp; {{substr($warning['from'],-8) . ' : ' . $warning['user'] . __(" is watching ") . $warning['name']}}
+        <i class="fa fa-warning"></i>&nbsp; {{$warning['from'] . ' (+ ' . $warning['counter'] . ') : ' . $warning['user'] . __(" is watching ") . $warning['name']}}
     </div>
 @endforeach
 <ul class="nav nav-tabs">

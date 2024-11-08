@@ -120,7 +120,8 @@ class SearchController extends Controller
         $warnings = [];
         foreach ($views as $view) {
             $warnings[] = ['user' => $view->user->name,
-                'from' => $view->read_at,
+                'from' => substr(substr($view->read_at,-8),0,5),
+                'counter' => Url::formatHour($view->counter),
                 'name' => Url::where("url","=",$view->url)->first()->name];
         }
 
