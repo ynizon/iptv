@@ -323,5 +323,6 @@
     "New user": "Nouvel utilisateur",
     "User deleted successfully.": "Utilisateur supprimé avec succès.",
     "User updated successfully.": "Utilisateur modifié avec succès.",
-    "User created successfully.": "Utilisateur créé avec succès."
+    "User created successfully.": "Utilisateur créé avec succès.",
+    " is watching ": " est en train de regarder "
 }
