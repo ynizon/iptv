@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Url;
 use App\Models\View;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -112,7 +113,18 @@ class SearchController extends Controller
             }
         }
 
-        return view("search", compact("urls", "pictures"));
+        $date = new DateTime();
+        $date->modify('-2 hours');
+        $time2Hour = $date->format('Y-m-d H:i:s');
+        $views = View::where("user_id", "!=", Auth::user()->id)->where("read_at", ">=", $time2Hour)->get();
+        $warnings = [];
+        foreach ($views as $view) {
+            $warnings[] = ['user' => $view->user->name,
+                'from' => $view->read_at,
+                'name' => Url::where("url","=",$view->url)->first()->name];
+        }
+
+        return view("search", compact("urls", "pictures", "warnings"));
     }
 
     public function view(Request $request, $id) {
@@ -127,8 +139,8 @@ class SearchController extends Controller
         $urls = Url::where("serie","=","1")->where("name","like",$name."%")->get();
         foreach ($urls as $url){
             $view = View::firstOrNew(
-                ['url' =>  $url->url, 'user_id' => 1],
-                ['url' =>  $url->url, 'user_id' => 1],
+                ['url' =>  $url->url, 'user_id' => Auth::user()->id],
+                ['url' =>  $url->url, 'user_id' => Auth::user()->id],
             );
             $view->favorite = !$view->favorite;
             $view->save();
@@ -136,11 +148,12 @@ class SearchController extends Controller
 
         return view("view");
     }
+
     public function favorite(Request $request, $id) {
         $url = Url::findOrFail($id);
         $view = View::firstOrNew(
-            ['url' =>  $url->url, 'user_id' => 1],
-            ['url' =>  $url->url, 'user_id' => 1],
+            ['url' =>  $url->url, 'user_id' => Auth::user()->id],
+            ['url' =>  $url->url, 'user_id' => Auth::user()->id],
         );
         $view->favorite = !$view->favorite;
         $view->save();
@@ -150,8 +163,8 @@ class SearchController extends Controller
     public function watched(Request $request, $id) {
         $url = Url::findOrFail($id);
         $view = View::firstOrNew(
-            ['url' =>  $url->url, 'user_id' => 1],
-            ['url' =>  $url->url, 'user_id' => 1],
+            ['url' =>  $url->url, 'user_id' => Auth::user()->id],
+            ['url' =>  $url->url, 'user_id' => Auth::user()->id],
         );
 
         $view->watched = !$view->watched;
@@ -159,11 +172,24 @@ class SearchController extends Controller
         return view("view");
     }
 
+    public function remove(Request $request, $id) {
+        $url = Url::findOrFail($id);
+        View::where("user_id",Auth::user()->id)->where("url",$url->url)->delete();
+    }
+
+    public function remove_serie(Request $request) {
+        $name = $request->input("name");
+        $urls = Url::where("serie","=","1")->where("name","like",$name."%")->get();
+        foreach ($urls as $url){
+            View::where("user_id",Auth::user()->id)->where("url",$url->url)->delete();
+        }
+    }
+
     public function forceWatched(Request $request, $id) {
         $url = Url::findOrFail($id);
         $view = View::firstOrNew(
-            ['url' =>  $url->url, 'user_id' => 1],
-            ['url' =>  $url->url, 'user_id' => 1],
+            ['url' =>  $url->url, 'user_id' => Auth::user()->id],
+            ['url' =>  $url->url, 'user_id' => Auth::user()->id],
         );
 
         $view->watched = 1;
@@ -173,17 +199,17 @@ class SearchController extends Controller
     }
 
     public function counter(Request $request, $id, $counter) {
-        if ($counter > 0) {
-            $url = Url::findOrFail($id);
-            $view = View::firstOrNew(
-                ['url' => $url->url, 'user_id' => 1],
-                ['url' => $url->url, 'user_id' => 1],
-            );
 
-            $view->counter = $counter;
-            $view->read_at = now();
-            $view->save();
-        }
+        $url = Url::findOrFail($id);
+        $view = View::firstOrNew(
+            ['url' => $url->url, 'user_id' => Auth::user()->id],
+            ['url' => $url->url, 'user_id' => Auth::user()->id],
+        );
+
+        $view->counter = $counter;
+        $view->read_at = now();
+        $view->save();
+
         return view("view");
     }
 

@@ -1,3 +1,8 @@
+@foreach($warnings as $warning)
+    <div class="alert alert-warning" role="alert">
+        <i class="fa fa-warning"></i>&nbsp; {{substr($warning['from'],-8) . ' : ' . $warning['user'] . " is watching " . $warning['name']}}
+    </div>
+@endforeach
 <ul class="nav nav-tabs">
     @if (count($urls["movies"]) > 0)
         <li class="nav-item">
@@ -32,6 +37,8 @@
                                 <br/>
                                 <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                                 <br/>
+                                <i class="fa fa-remove" style="cursor: pointer" onclick="remove(this, {{$url->id}})"></i>
+                                <br/>
                                 @if ($url->note != '' && $url->note != 'N/A' && $url->note != '-1')
                                     <br/>
                                     {{$url->note}}
@@ -62,6 +69,8 @@
                                     @if (isset($seasons['01']['01']))
                                         <i class="fa fa-heart @if ($seasons['01']['01']->isFavorite(1)) active @endif"
                                            style="cursor: pointer" onclick="addFavoriteSerie(this, '{{$serie}}')"></i>
+                                        <br/>
+                                        <i class="fa fa-remove" style="cursor: pointer" onclick="removeSerie(this, '{{$serie}}')"></i>
                                     @endif
                                 </div>
                                 <div style="float:left;padding-left:15px;">

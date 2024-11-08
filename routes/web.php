@@ -41,6 +41,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/search', [SearchController::class, 'search'])->name('search');
     Route::get('/favorite/{id}', [SearchController::class, 'favorite'])->name('favorite');
     Route::post('/favorite_serie', [SearchController::class, 'favorite_serie'])->name('favorite_serie');
+    Route::get('/remove/{id}', [SearchController::class, 'remove'])->name('remove');
+    Route::post('/remove_serie', [SearchController::class, 'remove_serie'])->name('remove_serie');
     Route::get('/forceWatched/{id}', [SearchController::class, 'forceWatched'])->name('forceWatched');
     Route::get('/watched/{id}', [SearchController::class, 'watched'])->name('watched');
     Route::get('/counter/{id}/{counter}', [SearchController::class, 'counter'])->name('counter');

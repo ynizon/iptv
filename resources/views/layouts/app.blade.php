@@ -116,9 +116,9 @@
                     "formats": formats
                 },
             })
-                .done(function(data) {
-                    $("#list").html(data);
-                });
+            .done(function(data) {
+                $("#list").html(data);
+            });
         }
 
         function addFavoriteSerie(button, name)
@@ -131,9 +131,9 @@
                     "name": name,
                 },
             })
-                .done(function() {
+            .done(function() {
 
-                });
+            });
         }
 
         function addFavorite(button, id)
@@ -160,6 +160,32 @@
             });
         }
 
+        function remove(button, id)
+        {
+            $(button).toggleClass("active");
+            $.ajax({
+                type: "GET",
+                url: "/remove/"+id,
+            })
+            .done(function() {
+                $(button).parent().parent().parent().remove();
+            });
+        }
+
+        function removeSerie(button, name)
+        {
+            $.ajax({
+                type: "POST",
+                url: "/remove_serie",
+                data: {
+                    "name": name,
+                },
+            })
+            .done(function() {
+                $(button).parent().parent().parent().remove();
+            });
+        }
+
         function addCounter(id)
         {
             let counter = parseInt($("#counter-"+id).attr('data-min'));
@@ -169,6 +195,11 @@
             $("#counter").html(formatHour(counter));
             myModal.show();
             urlId = id;
+
+            $.ajax({
+                type: "GET",
+                url: "/counter/"+id+"/0",
+            });
 
             myInterval = window.setInterval(
                 function ()
