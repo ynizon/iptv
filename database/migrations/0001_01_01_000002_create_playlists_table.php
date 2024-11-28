@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name')->index();
             $table->string('url')->index();
+            $table->string('tld')->default('');
+            $table->string('ip')->default('');
             $table->text('content')->nullable();
             $table->timestamps();
         });

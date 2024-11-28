@@ -324,5 +324,8 @@
     "User deleted successfully.": "Utilisateur supprimé avec succès.",
     "User updated successfully.": "Utilisateur modifié avec succès.",
     "User created successfully.": "Utilisateur créé avec succès.",
-    " is watching ": " est en train de regarder "
+    " is watching ": " est en train de regarder ",
+    "Show description": "Voir la description",
+    "IP if your DNS is banned": "L'ip si le DNS est banni",
+    "Replace the domain name by the ip if your DNS is banned" : "Remplacer le nom de domaine par l'ip si le DNS est banni"
 }

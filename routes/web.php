@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/watched/{id}', [SearchController::class, 'watched'])->name('watched');
     Route::get('/counter/{id}/{counter}', [SearchController::class, 'counter'])->name('counter');
     Route::get('/view/{id}', [SearchController::class, 'view'])->name('view');
+    Route::get('/picture/{id}', [SearchController::class, 'picture'])->name('picture');
 });
 
 require __DIR__.'/auth.php';

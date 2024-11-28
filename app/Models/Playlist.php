@@ -13,6 +13,8 @@ class Playlist extends Model
     protected $fillable = [
         'name',
         'url',
+        'tld',
+        'ip'
     ];
 
     public function urls(): HasMany

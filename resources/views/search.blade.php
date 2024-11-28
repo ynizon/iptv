@@ -29,8 +29,8 @@
         <div class="tab-pane fade" id="movies" role="tabpanel" aria-labelledby="movies-tab">
             <div class="row">
                 @foreach ($urls["movies"] as $url)
-                    <div class="col-md-2 mb-4 mb-lg-0">
-                        <div style="clear:both">
+                    <div style="float:left;width:250px;" class="col-md-2 mb-4 mb-lg-0">
+                        <div>
                             <div style="float:left;width:20px;">
                                 <br/>
                                 <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
@@ -41,16 +41,30 @@
                                 <br/>
                                 @if ($url->note != '' && $url->note != 'N/A' && $url->note != '-1')
                                     <br/>
-                                    {{$url->note}}
+                                    {{round($url->note,2)}}
                                 @endif
                                 <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
                             </div>
-                            <div style="float:left;width:200px;">
-                                <a id="ahref-{{$url->id}}" href="iptv://{{ $url->url }}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream">
-                                    <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
+                            <div class="movie">
+                                <a
+                                    id="ahref-{{$url->id}}" href="iptv://{{ $url->url }}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream">
+                                    <img src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" />
                                     <br/>
                                     <span id="urlname-{{$url->id}}">{{$url->name}}</span>
                                 </a>
+                                <div onclick="showDescription({{$url->id}}, 1)" style="text-align: center">
+                                    {{__("Show description")}}
+                                </div>
+                                <div onmouseover="showDescription({{$url->id}}, 1)" onmouseout="showDescription({{$url->id}}, 0)" onclick="showDescription({{$url->id}}, 0)"
+                                     id="description-{{$url->id}}" style="display:none" class="popin">
+                                    <h4>{{$url->name}}</h4>
+                                    <hr/>
+                                    @if ($url->note>0)
+                                        <h5>{{round($url->note,2)}}/10 ({{$url->votes}} votes)</h5>
+                                        <hr/>
+                                    @endif
+                                    {{$url->imdb}}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -74,10 +88,11 @@
                                     @endif
                                 </div>
                                 <div style="float:left;padding-left:15px;">
-                                    <img style="max-width:150px" src="{{($pictures[$serie] != '') ? $pictures[$serie] : '/images/default.webp'}}" />
+                                    <img style="max-width:150px" src="{{($pictures[$serie] != '') ? "/picture/".$pictures[$serie] : '/images/default.webp'}}" />
                                 </div>
                                 <div style="float:left;padding-left:15px;">
                                     <h5>{{$serie}}</h5>
+                                    {{$descriptions[$serie]}}
                                 </div>
                                 <div style="clear:both;padding-top:5px;" >
                                     <div class="accordion" id="accordion{{md5($serie)}}">
@@ -124,15 +139,15 @@
         <div class="tab-pane fade" id="tv" role="tabpanel" aria-labelledby="tv-tab">
             <div class="row">
                 @foreach ($urls["channels"] as $url)
-                    <div class="col-md-2 mb-4 mb-lg-0">
+                    <div style="float:left;width:250px;" class="col-md-2 mb-4 mb-lg-0">
                         <div style="clear:both">
                             <div style="float:left;width:20px;">
                                 <br/>
                                 <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                             </div>
-                            <div style="float:left;width:200px;">
-                                <a href="iptv://0\{{$url->url}}" data-id="{{$url->id}}" class="stream">
-                                    <img src="{{($url->picture != '') ? $url->picture : '/images/default.webp'}}" />
+                            <div class="movie">
+                                <a href="iptv://{{$url->url}}" data-id="{{$url->id}}">
+                                    <img src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" />
                                     <br/>
                                     {{$url->name}}
                                 </a>

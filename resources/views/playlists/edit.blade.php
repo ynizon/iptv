@@ -38,6 +38,16 @@
                             <input type="text" class="form-control" id="url" name="url" placeholder="http://yourwebsite/get.php?username=XXX&password=YYY&type=m3u_plus&output=ts.m3U"
                                    value="{{$playlist->url}}" required>
                         </div>
+                        <div class="form-group">
+                            <label for="url">{{__('Replace the domain name by the ip if your DNS is banned')}}</label>
+                            <input type="text" class="form-control" id="tld" name="tld" placeholder="yourwebsite.com"
+                                   value="{{$playlist->tld}}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="url">{{__('IP if your DNS is banned')}}</label>
+                            <input type="text" class="form-control" id="ip" name="ip" placeholder=""
+                                   value="{{$playlist->ip}}" required>
+                        </div>
                         <br>
                         <button type="submit" class="btn btn-primary">
                             <i class="pad fas fa-save" aria-hidden="true"></i> {{__("Save")}}

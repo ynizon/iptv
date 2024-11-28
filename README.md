@@ -32,19 +32,20 @@ php artisan refresh:playlist
 
 ### Don't forget to go to the settings page to get the method to open movies link for linux or windows.
 
-##  OMDB Notation
+##  TMDB Notation
 
-You can set your omdb api key (https://www.omdbapi.com/) in your .env (OMDB_KEY)
-to get movies informations like notes, votes, but request are limited...
+You can set your tmdb api key (https://www.themoviedb.org) in your .env (TMDB_KEY)
+to get movies informations like notes, votes...
 Then launch : 
 ````
-php artisan refresh:omdb
+php artisan refresh:info
 ````
 
 ## Updating
 Launch this commande to refresh your library:
 ````
 php artisan refresh:playlist
+php artisan refresh:info
 ````
 
 ## Screenshots

@@ -56,6 +56,7 @@ class Omdb extends Command
 
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
+        $this->info("");
         $this->info("Finished : " . number_format($executionTime, 2) . " sec with ". $nbError . " errors");
     }
 

@@ -10,7 +10,7 @@ class UrlImport extends Model
 {
     use HasFactory;
 
-    public function category(): BelongsTo
+    public function playlist(): BelongsTo
     {
         return $this->belongsTo(Playlist::class);
     }

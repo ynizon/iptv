@@ -11,4 +11,5 @@ for /f "tokens=1,2 delims=#" %%a in ("%url%") do (
 )
 
 rem Lancer VLC avec l'URL nettoyée
+"C:\Program Files\VideoLAN\VLC\vlc.exe " "--fullscreen" "--one-instance" "--start-time=%start_time%" "%url%"
 "C:\Program Files (x86)\VideoLAN\VLC\vlc.exe " "--fullscreen" "--one-instance" "--start-time=%start_time%" "%url%"

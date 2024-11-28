@@ -178,7 +178,7 @@ class RefreshPlaylist extends Command
 
                         if (!isset($urls[$url['url']])) {
                             $data[] = $url;
-                            if ($nb >= 1000) {
+                            if ($nb >= 100) {
                                 UrlImport::insert($data);
                                 $data = [];
                                 $nb = 0;

@@ -117,6 +117,18 @@ class Movie extends Item implements MovieInterface
     }
 
     /**
+     * Get number of movie notes
+     * @return float
+     */
+    public function getNbNotes() : float
+    {
+        if (isset($this->data->vote_count)) {
+            return $this->data->vote_count;
+        }
+        return 0;
+    }
+
+    /**
      * Get movie id
      * @return int
      */

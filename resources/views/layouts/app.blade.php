@@ -136,6 +136,14 @@
             });
         }
 
+        function showDescription(id, show) {
+            if (show) {
+                $("#description-" +id).show();
+            } else {
+                $("#description-" +id).hide();
+            }
+        }
+
         function addFavorite(button, id)
         {
             $(button).toggleClass("active");

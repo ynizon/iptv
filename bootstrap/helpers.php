@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Playlist;
 use Creativeorange\Gravatar\Facades\Gravatar;
 use Illuminate\Support\Facades\Route;
 

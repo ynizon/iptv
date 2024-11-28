@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Helpers\Sqlite;
+use App\Models\Url;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use VfacTmdb\Factory;
+use VfacTmdb\Item;
 use VfacTmdb\Search;
 
 class RefreshInfo extends Command
@@ -39,24 +41,66 @@ class RefreshInfo extends Command
      */
     public function handle(DatabaseManager $manager, Sqlite $sqlite)
     {
+        $nbError = 0;
         $options = ['language'=>'fr-FR'];
-        //@TODO
-        /*
         $sqlite->setWalJournalMode(
             $db = $sqlite->getDatabase($manager, 'sqlite')
         );
-
+        $startTime = microtime(true);
+        if (env("TMDB_KEY") == '') {
+            $this->error('Set your TMDB_KEY api in your .env file.');
+            exit();
+        }
+        $this->info('Refresh TMDB');
         $tmdb = Factory::create()->getTmdb(env('TMDB_KEY'));
         $search    = new Search($tmdb);
-        $responses = $search->tvshow('Mon oncle Charlie', $options);
 
-        // Get all results
-        echo json_encode($responses);
-        foreach ($responses as $response)
-        {
-            echo $response->getTitle()."\n";
+        $nb = 0;
+        $bar = $this->output->createProgressBar(Url::whereNull("imdb")->where("tvchannel","!=","1")
+            ->where("filter","=",0)->count());
+        foreach (Url::whereNull("imdb")->where("tvchannel","!=","1")->where("filter","=",0)->get() as $url) {
+            $bar->advance();
+            $name = $url->name;
+            $name = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}]/u', '', $name);
+            $pos = stripos($name,"(");
+
+            if ($pos !== false ){
+                $name = trim(substr($name,0,$pos));
+            }
+
+            try {
+                if ($url->movie == 1) {
+                    $responses = $search->movie($name, $options);
+                } else {
+                    $responses = $search->tvshow($name, $options);
+                }
+
+                foreach ($responses as $response) {
+                    $item = new Item($tmdb);
+                    $infos = $item->getMovie($response->getId(), $options);
+                    $url->year = '';
+                    if ($infos->getReleaseDate() != '') {
+                        $url->year = substr($infos->getReleaseDate(), 0, 4);
+                    }
+                    $url->note = $infos->getNote();
+                    $url->votes = $infos->getNbNotes();
+                    $url->imdb = $infos->getOverview();
+
+                    $url->save();
+                    break;
+                }
+            }catch(\Exception $e){
+                $nbError++;
+                $url->imdb = "-";
+                $url->save();
+            }
+
+            $nb++;
         }
-        exit();
-        */
+
+        $endTime = microtime(true);
+        $executionTime = $endTime - $startTime;
+        $this->info("");
+        $this->info("Finished : " . number_format($executionTime, 2) . " sec with ". $nbError . " errors");
     }
 }
