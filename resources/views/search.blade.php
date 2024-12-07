@@ -47,7 +47,7 @@
                             </div>
                             <div class="movie">
                                 <a
-                                    id="ahref-{{$url->id}}" href="iptv://{{ $url->url }}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream">
+                                    id="ahref-{{$url->id}}" href="iptv://{{ $url->urlFinal }}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream">
                                     <img src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" />
                                     <br/>
                                     <span id="urlname-{{$url->id}}">{{$url->name}}</span>
@@ -112,7 +112,7 @@
                                                             @foreach ($episods as $episod => $url)
                                                                 <li>
                                                                     <div>
-                                                                        <a id="ahref-{{$url->id}}" href="iptv://{{$url->url}}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream left" style="display:inline; ">
+                                                                        <a id="ahref-{{$url->id}}" href="iptv://{{$url->urlFinal}}#{{$url->counterSec(Auth::user()->id)}}" data-id="{{$url->id}}" class="stream left" style="display:inline; ">
                                                                             Episode {{$episod}}
                                                                         </a>
                                                                         <span id="urlname-{{$url->id}}">{{$url->name}}</span>
@@ -146,7 +146,7 @@
                                 <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                             </div>
                             <div class="movie">
-                                <a href="iptv://{{$url->url}}" data-id="{{$url->id}}">
+                                <a href="iptv://{{$url->urlFinal}}" data-id="{{$url->id}}">
                                     <img src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" />
                                     <br/>
                                     {{$url->name}}

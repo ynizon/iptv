@@ -93,7 +93,7 @@ class SearchController extends Controller
                 }
             }
             if ($ok) {
-                $url->url = $this->replaceUrlDns($url->url);
+                $url->urlFinal = $this->replaceUrlDns($url->url);
                 if ($url->movie) {
                     $urls["movies"][] = $url;
                 }
