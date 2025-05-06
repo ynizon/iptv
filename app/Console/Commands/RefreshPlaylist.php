@@ -64,6 +64,8 @@ class RefreshPlaylist extends Command
                 $this->info('Parse Playlist Urls #'.$nbPlaylist);
                 $this->parseFileAndCreateUrl($playlist);
             }
+            $playlist->updated_at = date("Y-m-d H:i:s");
+            $playlist->save();
         }
 
          DB::table('url_imports')->orderBy('id')->chunk(100, function ($rows) {

@@ -1,4 +1,4 @@
-FROM php:8.2-cli
+FROM php:8.2-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -27,6 +27,9 @@ RUN crontab /etc/cron.d/laravel-cron
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www
+
+# Expose le port 9090
+EXPOSE 9090
 
 # Start cron + php command (use supervisord for production)
 CMD ["sh", "-c", "cron && php-fpm"]
