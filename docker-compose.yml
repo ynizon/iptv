@@ -1,21 +1,19 @@
 services:
-  laravel:
-    build: .
+  laravel-app:
+    build:
+        context: '.'
+        args:
+            uid: ${UID}
     container_name: laravel_iptv
-    volumes:
-      - .:/var/www
-      - ./database:/var/www/database
-    working_dir: /var/www
     ports:
-      - "8000:8000"
-    command: >
-      sh -c "
-      if [ ! -f vendor/autoload.php ]; then
-        composer install --no-interaction;
-      fi &&
-      php artisan key:generate &&
-      touch database/database.sqlite &&      
-      php artisan migrate &&
-      cron &&
-      php artisan serve --host=0.0.0.0 --port=8000"
-
+        - 8000:80
+    environment:
+        - APACHE_RUN_USER=#1000
+        - APACHE_RUN_GROUP=#1000
+    volumes:
+        - .:/var/www/html
+        - ./database:/var/www/html/database
+    networks:
+        backend:
+            aliases:
+                - app
