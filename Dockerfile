@@ -41,5 +41,5 @@ RUN chown -R www-data:www-data /app
 EXPOSE 80 443
 
 # Start cron + php command (use supervisord for production)
-CMD ["sh", "-c", "cd /var/www && php artisan key:generate && php artisan migrate && cron && php artisan serve --host=0.0.0.0 --port=443"]
+CMD ["sh", "-c", "cd /var/www && php artisan key:generate && php artisan migrate && cron && php artisan serve --host=0.0.0.0 --port=80"]
 
