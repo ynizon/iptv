@@ -2,7 +2,7 @@ FROM php:8.2-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git unzip zip cron sqlite3 libsqlite3-dev libzip-dev \
+    git unzip zip cron sqlite3 libsqlite3-dev libzip-dev nodejs npm vim \
     && docker-php-ext-install pdo pdo_sqlite
 
 # Install Composer
@@ -18,6 +18,9 @@ WORKDIR /var/www
 
 # Install dependencies
 RUN composer install --no-interaction
+
+# Install SSL
+RUN npm install @vitejs/plugin-basic-ssl --legacy-peer-deps
 
 # Copy crontab file
 COPY crontab /etc/cron.d/laravel-cron
@@ -37,9 +40,12 @@ RUN touch /var/www/database/database.sqlite
 # Set proper permissions
 RUN chown -R www-data:www-data /app
 
+# Set key and data
+RUN php artisan key:generate && php artisan migrate --seed
+
 #Expose the port
-EXPOSE 80 443
+EXPOSE 80 443 5173 8000
 
 # Start cron + php command (use supervisord for production)
-CMD ["sh", "-c", "cd /var/www && php artisan key:generate && php artisan migrate && cron && php artisan serve --host=0.0.0.0 --port=80"]
+CMD ["sh", "-c", "cd /var/www && cron && php artisan serve --host=0.0.0.0 --port=80 & npm run dev & wait"]
 
