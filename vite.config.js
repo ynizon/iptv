@@ -4,8 +4,8 @@ import laravel from 'laravel-vite-plugin';
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // 002 set the Laravel host and the port
-const host = '127.0.0.1';
-const port = '8000';
+const host = '0.0.0.0';
+const port = '80';
 
 export default defineConfig({
     plugins: [
