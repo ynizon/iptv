@@ -89,6 +89,9 @@ class DatabaseSeeder extends Seeder
 
         DB::table('playlists')->insert([
             'name' => 'IPTV',
+            'content' => '',
+            'tld' => '',
+            'ip' => '',
             'url' => env("M3U","http://yourwebsite/get.php?username=XXX&password=YYY&type=m3u_plus&output=ts.m3U"),
         ]);
 

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('url')->unique();
             $table->string('name')->index();
+            $table->string('short_name')->default('');
             $table->string('picture');
             $table->string('category');
             $table->integer('tvchannel')->default(0);

@@ -236,6 +236,30 @@ class SearchController extends Controller
         $view->read_at = now();
         $view->save();
 
+        //Look for next episod
+        if ($url->serie == 1) {
+            $nextEpisod = $url = Url::where("short_name","=",$url->short_name)
+                ->where("season","=",$url->season)
+                ->where("episod","=",($url->episod+1))->first();
+
+            if (!$nextEpisod){
+                $nextEpisod = $url = Url::where("short_name","=",$url->short_name)
+                    ->where("season","=",($url->season)+1)
+                    ->where("episod","=",1)->first();
+            }
+
+            if ($nextEpisod){
+                $viewNextEpisod = View::firstOrNew(
+                    ['url' => $nextEpisod->url, 'user_id' => Auth::user()->id],
+                    ['url' => $nextEpisod->url, 'user_id' => Auth::user()->id],
+                );
+
+                $viewNextEpisod->counter = 0;
+                $viewNextEpisod->read_at = now();
+                $viewNextEpisod->save();
+            }
+        }
+
         return view("view");
     }
 

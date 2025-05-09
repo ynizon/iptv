@@ -56,10 +56,9 @@ class RefreshPlaylist extends Command
         $nbPlaylist = 0;
         foreach (Playlist::all() as $playlist) {
             $nbPlaylist++;
-            if ($playlist->content == '') {
-                $this->info('Download Playlist Content #'.$nbPlaylist);
-                $playlist = $this->downloadFile($playlist);
-            }
+            $this->info('Download Playlist Content #'.$nbPlaylist);
+            $playlist = $this->downloadFile($playlist);
+
             if ($playlist->content != '') {
                 $this->info('Parse Playlist Urls #'.$nbPlaylist);
                 $this->parseFileAndCreateUrl($playlist);
@@ -84,12 +83,18 @@ class RefreshPlaylist extends Command
 
     protected function downloadFile($playlist)
     {
+
+        $url = $playlist->url;
+        if ($playlist->tld != '' && $playlist->ip != '') {
+            $url = str_replace($playlist->tld, $playlist->ip, $url);
+        }
+
         $timeout = 120;
-        $ch = curl_init($playlist->url);
+        $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-        if (preg_match('`^https://`i', $playlist->url))
+        if (preg_match('`^https://`i', $url))
         {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
@@ -98,6 +103,10 @@ class RefreshPlaylist extends Command
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; fr; rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13');
         $content = curl_exec($ch);
+        if($content === false)
+        {
+            $this->error( 'Error Curl : ' . curl_error($ch));
+        }
         curl_close($ch);
 
         $playlist->content = $content;
@@ -161,6 +170,7 @@ class RefreshPlaylist extends Command
                             'tvchannel' => $tvChannel,
                             'movie' => $movie,
                             'name' => $tvg_name,
+                            'short_name' => $tvg_name_without_number,
                             'category' => $group_title,
                             'picture' => $tvg_logo,
                             'filter' => 0,
@@ -180,7 +190,7 @@ class RefreshPlaylist extends Command
 
                         if (!isset($urls[$url['url']])) {
                             $data[] = $url;
-                            if ($nb >= 100) {
+                            if ($nb >= 5000) {
                                 UrlImport::insert($data);
                                 $data = [];
                                 $nb = 0;
@@ -209,6 +219,7 @@ class RefreshPlaylist extends Command
         $url->filter = $urlImport['filter'];
         $url->picture = $urlImport['picture'];
         $url->name = $urlImport['name'];
+        $url->short_name = $urlImport['short_name'];
         $url->tvchannel = $urlImport['tvchannel'];
         $url->serie = $urlImport['serie'];
         $url->movie = $urlImport['movie'];
