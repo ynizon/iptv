@@ -3,7 +3,7 @@
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
             aria-hidden="true" id="iconSidenav"></i>
         <div class="navbar-brand d-flex align-items-center m-0">
-            <a href="/">
+            <a href="/" title="{{ \App\Helpers\Sqlite::getLastRefresh() }}">
                 <span class="font-weight-bold text-lg">{{config("app.name")}}</span>
             </a>
             <a href="/settings"><i class="fa fa-cog" style="padding-left:50px;color:#ffffff"></i></a>

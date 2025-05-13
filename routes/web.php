@@ -6,7 +6,9 @@ use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/cron', [CronController::class, 'cron'])->name('cron');
@@ -14,6 +16,15 @@ Route::get('/', function () {
     if (Auth::id()){
         return redirect('dashboard');
     } else {
+        //Automatically login
+        $user = User::where("email","=",Cookie::get('email'))
+            ->where("remember_token","=",Cookie::get('remember_token'))
+            ->first();
+        if ($user){
+            Auth::loginUsingId($user->id);
+            return redirect('dashboard');
+        }
+
         $pictures = array_filter(glob(public_path('screenshots').'/*'), 'is_file');
         return view('welcome', compact('pictures'));
     }

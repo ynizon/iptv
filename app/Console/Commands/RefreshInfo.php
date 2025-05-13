@@ -6,6 +6,7 @@ use App\Helpers\Sqlite;
 use App\Models\Url;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\DB;
 use VfacTmdb\Factory;
 use VfacTmdb\Item;
 use VfacTmdb\Search;
@@ -51,6 +52,8 @@ class RefreshInfo extends Command
             $this->error('Set your TMDB_KEY api in your .env file.');
             exit();
         }
+        DB::update("update urls set picture = '' where picture like '%365.tv%'");//Remove error picture
+
         $this->info('Refresh TMDB');
         $tmdb = Factory::create()->getTmdb(env('TMDB_KEY'));
         $search    = new Search($tmdb);
@@ -77,15 +80,20 @@ class RefreshInfo extends Command
 
                 foreach ($responses as $response) {
                     $item = new Item($tmdb);
-                    $infos = $item->getMovie($response->getId(), $options);
+                    if ($url->movie == 1) {
+                        $infos = $item->getMovie($response->getId(), $options);
+                        $url->votes = $infos->getNbNotes();
+                    }else {
+                        $url->votes = 0;
+                        $infos = $item->getTVShow($response->getId(), $options);
+                    }
                     $url->year = '';
                     if ($infos->getReleaseDate() != '') {
                         $url->year = substr($infos->getReleaseDate(), 0, 4);
                     }
                     $url->note = $infos->getNote();
-                    $url->votes = $infos->getNbNotes();
                     $url->imdb = $infos->getOverview();
-
+                    $url->picture = "https://image.tmdb.org/t/p/w300_and_h450_bestv2/".$infos->getPosterPath();
                     $url->save();
                     break;
                 }

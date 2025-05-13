@@ -67,8 +67,8 @@ class PlaylistController extends Controller
         $validated = [];
         $validated['name'] = $request->input('name');
         $validated['url'] = $request->input('url');
-        $validated['tld'] = $request->input('tld');
-        $validated['ip'] = $request->input('ip');
+        $validated['tld'] = $request->input('tld') ? $request->input('tld') : '';
+        $validated['ip'] = $request->input('ip') ? $request->input('ip') : '';
         $playlist->update($validated);
         return redirect()->route('playlists.index')
             ->with('success', __('Playlist updated successfully.'));

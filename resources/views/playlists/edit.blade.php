@@ -41,12 +41,12 @@
                         <div class="form-group">
                             <label for="url">{{__('Replace the domain name by the ip if your DNS is banned')}}</label>
                             <input type="text" class="form-control" id="tld" name="tld" placeholder="yourwebsite.com"
-                                   value="{{$playlist->tld}}" required>
+                                   value="{{$playlist->tld}}" >
                         </div>
                         <div class="form-group">
                             <label for="url">{{__('IP if your DNS is banned')}}</label>
                             <input type="text" class="form-control" id="ip" name="ip" placeholder=""
-                                   value="{{$playlist->ip}}" required>
+                                   value="{{$playlist->ip}}" >
                         </div>
                         <br>
                         <button type="submit" class="btn btn-primary">

@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\Playlist;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Query\Expression;
@@ -51,4 +52,10 @@ class Sqlite
         return data_get($connection->select(new Expression('PRAGMA journal_mode')), '0.journal_mode');
     }
 
+    public static function getLastRefresh()
+    {
+        foreach (Playlist::orderBy("updated_at","desc")->get() as $playlist) {
+            return $playlist->updated_at;
+        };
+    }
 }
