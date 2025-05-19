@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CronController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\PlaylistController;
@@ -47,6 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', [SearchController::class, 'settings'])->name('settings');
     Route::post('/settings', [SearchController::class, 'settings'])->name('settings');
     Route::resource('/playlists', PlaylistController::class);
+    Route::resource('/categories', CategoryController::class);
     Route::resource('/filters', FilterController::class);
     Route::get('/dashboard', [SearchController::class, 'dashboard'])->name('dashboard');
     Route::post('/search', [SearchController::class, 'search'])->name('search');

@@ -27,6 +27,9 @@
                             <a class="tl" href="/playlists">{{__("Playlists")}}</a>
                             <br/>
                             <a class="tl" href="/filters">{{__("Filters")}}</a>
+                            <br/>
+                            <a class="tl" href="/categories">{{__("Categories")}}</a>
+
                             @if (Auth::user()->isAdmin())
                                 <br/>
                                 <a class="tl" href="/users">{{__("Users")}}</a>

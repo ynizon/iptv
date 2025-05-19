@@ -2,6 +2,7 @@
 
 namespace App\View\Components;
 
+use App\Models\Category;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -14,12 +15,18 @@ class Categories extends Component
      */
     public function render(): View|Closure|string
     {
+        $renames = Category::all();
         $categories = [];
         $urls = DB::table('urls')->select('category')->where("filter","=",0)
             ->distinct()->orderBy("category")->get();
         foreach ($urls as $url)
         {
-            $categories[] = $url->category;
+            $category = $url->category;
+            foreach ($renames as $rename)
+            {
+                $category = str_replace($rename->from, $rename->to, $category);
+            }
+            $categories[] = $category;
         }
         return view('components.categories', compact('categories'));
     }
