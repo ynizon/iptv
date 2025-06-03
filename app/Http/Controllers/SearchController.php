@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Intervention\Image\ImageManager;
 use App\Models\Playlist;
 use App\Models\Url;
 use App\Models\View;
@@ -289,6 +290,11 @@ class SearchController extends Controller
 
     public function picture($id) {
         try {
+            $file = "images/playlist/$id.jpg";
+            if (file_exists(public_path($file))) {
+                return response()->file($file);
+            }
+
             $ctype = "image/webp";
             $content = file_get_contents(public_path('images/default.webp'));
 
@@ -330,11 +336,24 @@ class SearchController extends Controller
                     }
                 }
             }
-        }catch(Exception $e) {
-            //Do nothing
-        }
 
-        header('Content-type: ' . $ctype);
-        echo $content;
+            if (extension_loaded('gd')) {
+                $manager = new ImageManager(
+                    new \Intervention\Image\Drivers\Gd\Driver()
+                );
+                $width = 120;
+                $height = 180;
+                $image = $manager->read($content);
+                $image->resize($width, $height);
+                $encoded = $image->toJpg();
+                $encoded->save($file);
+                return response()->file($file);
+            } else {
+                header('Content-type: ' . $ctype);
+                echo $content;
+            }
+        }catch(Exception $e) {
+            return response()->file('images/default.webp');
+        }
     }
 }

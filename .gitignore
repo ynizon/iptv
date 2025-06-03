@@ -4,6 +4,7 @@
 /public/hot
 /public/M3U
 /public/storage
+/public/images/playlist
 /storage/*.key
 /vendor
 .env

@@ -53,3 +53,8 @@ php artisan refresh:info
 <img src="public/screenshots/1.jpg">
 <img src="public/screenshots/2.jpg">
 <img src="public/screenshots/3.jpg">
+
+
+## Docker
+Mapping port 8051 -> 80
+Mapping volume yours -> /var/www
