@@ -17,6 +17,7 @@ class Categories extends Component
     {
         $renames = Category::all();
         $categories = [];
+        $originalCategories = [];
         $urls = DB::table('urls')->select('category')->where("filter","=",0)
             ->distinct()->orderBy("category")->get();
         foreach ($urls as $url)
@@ -32,8 +33,9 @@ class Categories extends Component
             if (!in_array($category, $categories))
             {
                 $categories[] = $category;
+                $originalCategories[$category] = $url->category;
             }
         }
-        return view('components.categories', compact('categories'));
+        return view('components.categories', compact('categories', 'originalCategories'));
     }
 }
