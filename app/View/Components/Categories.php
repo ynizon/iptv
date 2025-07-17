@@ -21,12 +21,18 @@ class Categories extends Component
             ->distinct()->orderBy("category")->get();
         foreach ($urls as $url)
         {
-            $category = $url->category;
+            $category = trim($url->category);
             foreach ($renames as $rename)
             {
                 $category = str_replace($rename->from, $rename->to, $category);
+                $category = str_replace("|", "-", $category);
             }
-            $categories[] = $category;
+
+            $category = trim($category);
+            if (!in_array($category, $categories))
+            {
+                $categories[] = $category;
+            }
         }
         return view('components.categories', compact('categories'));
     }
