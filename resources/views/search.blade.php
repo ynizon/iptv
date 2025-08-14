@@ -39,10 +39,13 @@
                                 <br/>
                                 <i class="fa fa-remove" style="cursor: pointer" onclick="remove(this, {{$url->id}})"></i>
                                 <br/>
+                                <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
+                                <br/>
                                 @if ($url->note != '' && $url->note != 'N/A' && $url->note != '-1')
                                     <br/>
                                     {{round($url->note,2)}}
                                 @endif
+                                
                                 <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
                             </div>
                             <div class="movie">
@@ -88,7 +91,7 @@
                                     @endif
                                 </div>
                                 <div style="float:left;padding-left:15px;">
-                                    <img style="max-width:150px" src="{{($pictures[$serie] != '') ? "/picture/".$pictures[$serie] : '/images/default.webp'}}" />
+                                    <img class="serie-pic" style="max-width:150px" src="{{($pictures[$serie] != '') ? "/picture/".$pictures[$serie] : '/images/default.webp'}}" />
                                 </div>
                                 <div style="float:left;padding-left:15px;">
                                     <h5>{{$serie}}</h5>
@@ -118,6 +121,8 @@
                                                                         <span id="urlname-{{$url->id}}">{{$url->name}}</span>
                                                                         <span class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</span>
                                                                         <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
+                                                                        &nbsp;&nbsp;
+                                                                        <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
                                                                     </div>
                                                                 </li>
                                                             @endforeach
@@ -144,10 +149,12 @@
                             <div style="float:left;width:20px;">
                                 <br/>
                                 <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                                <br/>
+                                <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
                             </div>
                             <div class="movie">
                                 <a href="iptv://{{$url->urlFinal}}" data-id="{{$url->id}}">
-                                    <img src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" />
+                                    <img class="channel-pic" src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" />
                                     <br/>
                                     {{$url->name}}
                                 </a>
@@ -169,4 +176,8 @@
     $(".tab-pane").removeClass("active");
     $(".tab-pane:first").addClass("active");
     $(".tab-pane:first").addClass("show");
+    
+    function copyLink(url){
+        navigator.clipboard.writeText(url);
+    }
 </script>

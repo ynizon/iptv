@@ -56,7 +56,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Font Awesome Icons -->
-    <script src="https://kit.fontawesome.com/349ee9c857.js" crossorigin="anonymous"></script>
     <link href="/assets/css/nucleo-svg.css" rel="stylesheet" />
     <!-- CSS Files -->
     <link id="pagestyle" href="/assets/css/corporate-ui-dashboard.css?v=1.0.0" rel="stylesheet" />
@@ -95,7 +94,11 @@
                 $("#category").val($(this).attr("data-category"));
                 $(".category").removeClass("category-active");
                 $(this).addClass("category-active");
+                if ($(this).attr("data-category") != -2) {
+                    toggleSidenav(); // Ferme le sidenav
+                }
                 refreshMovies();
+
             });
 
             myModal = new bootstrap.Modal(document.getElementById('myModal'), {
@@ -104,9 +107,14 @@
             });
         });
 
+        function toggleSidenav() {
+            document.body.classList.toggle('sidenav-open');
+        }
+
         function refreshMovies(){
             let formats = {!! Auth::user()->getFormats() !!};
 
+            $("#list").html('<span class="loader" id="loader"></span>');
             $.ajax({
                 type: "POST",
                 url: "/search",
@@ -118,6 +126,9 @@
             })
             .done(function(data) {
                 $("#list").html(data);
+            })
+            .error(function() {
+                $("#list").html('');
             });
         }
 

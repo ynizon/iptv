@@ -1,3 +1,8 @@
+<button class="navbar-toggler d-block d-xl-none" type="button" id="burgerSidenavToggle" 
+    aria-controls="sidenav-main" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="fa fa-bars"></span>
+</button>
+
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 bg-slate-900 fixed-start " id="sidenav-main">
     <div class="sidenav-header">
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
@@ -22,3 +27,21 @@
         </ul>
     </div>
 </aside>
+
+
+<script>
+    const burgerToggleBtn = document.getElementById('burgerSidenavToggle');
+    const sidenavMain = document.getElementById('sidenav-main');
+    
+    if (burgerToggleBtn) {
+        burgerToggleBtn.addEventListener('click', toggleSidenav);
+    }
+
+    document.addEventListener('click', (event) => {
+        if (document.body.classList.contains('sidenav-open') &&
+            !sidenavMain.contains(event.target) &&
+            !burgerToggleBtn.contains(event.target)) {
+            toggleSidenav(); // Ferme le sidenav
+        }
+    });
+</script>
