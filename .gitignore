@@ -6,6 +6,7 @@
 /public/storage
 /public/images/playlist
 /storage/*.key
+/storage/*.m3u8
 /vendor
 .env
 .env.backup

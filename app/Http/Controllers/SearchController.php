@@ -143,6 +143,22 @@ class SearchController extends Controller
             }
         }
 
+
+        //Create m3u8 file in storage (if you use Kodi)
+        $fp = fopen(storage_path(Auth::user()->id.".m3u8"),"w+");
+        fputs($fp, "#EXTM3U".PHP_EOL);
+        foreach ($urls["channels"] as $channel)
+        {
+            fputs($fp,'#EXTINF:-1 tvg-id="'.$channel['id'].'" tvg-name="'.$channel['name'].'" tvg-logo="'.$channel['picture'].'" group-title="'.$channel['category'].'",'.$channel['name']. PHP_EOL);
+            fputs($fp,$channel['url'] . PHP_EOL);
+        }
+        foreach ($urls["movies"] as $movie)
+        {
+            fputs($fp,'#EXTINF:-1 tvg-id="'.$movie['id'].'" tvg-name="'.$movie['name'].'" tvg-logo="'.$movie['picture'].'" group-title="'.$movie['category'].'",'.$movie['name'].PHP_EOL);
+            fputs($fp,$movie['url'] . PHP_EOL);
+        }
+        fclose($fp);
+
         return view("search", compact("urls", "pictures", "warnings", "descriptions"));
     }
 

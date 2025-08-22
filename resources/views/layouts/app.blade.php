@@ -126,9 +126,6 @@
             })
             .done(function(data) {
                 $("#list").html(data);
-            })
-            .error(function() {
-                $("#list").html('');
             });
         }
 
