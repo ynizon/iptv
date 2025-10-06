@@ -27,7 +27,7 @@ h5{padding:5px;}
     color:#64748b;
     text-transform: uppercase;
 }
-.category-active{
+.categories li.category-active{
     color:#95ff20;
 }
 

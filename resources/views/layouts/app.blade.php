@@ -91,14 +91,15 @@
             } );
 
             $( ".category" ).on( "click", function(button) {
-                $("#category").val($(this).attr("data-category"));
+                $("#category").val(this.getAttribute("data-category"));
                 $(".category").removeClass("category-active");
                 $(this).addClass("category-active");
-                if ($(this).attr("data-category") != -2) {
+
+                if (this.getAttribute("data-category") != -2) {
                     toggleSidenav(); // Ferme le sidenav
                 }
-                refreshMovies();
 
+                refreshMovies();
             });
 
             myModal = new bootstrap.Modal(document.getElementById('myModal'), {
