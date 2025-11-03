@@ -24,11 +24,11 @@ h5{padding:5px;}
     text-align: left;
 }
 .category{
-    color:#64748b;
+    color:#e7e7e7;
     text-transform: uppercase;
 }
-.categories li.category-active{
-    color:#95ff20;
+.category-active{
+    color:#95ff20 !important;
 }
 
 .fa-eye.active{

@@ -47,12 +47,14 @@ class RefreshPlaylist extends Command
      */
     public function handle(DatabaseManager $manager, Sqlite $sqlite)
     {
+		ini_set('memory_limit', '512M'); 
         UrlError::truncate();
         $sqlite->setWalJournalMode(
             $db = $sqlite->getDatabase($manager, 'sqlite')
         );
 
         $startTime = microtime(true);
+
         $nbPlaylist = 0;
         foreach (Playlist::all() as $playlist) {
             $nbPlaylist++;
@@ -67,8 +69,12 @@ class RefreshPlaylist extends Command
             $playlist->save();
         }
 
-         DB::table('url_imports')->orderBy('id')->chunk(100, function ($rows) {
-            $data = json_decode(json_encode($rows), true);
+        DB::table('url_imports')->orderBy('id')->chunk(100, function ($rows) {
+            $data = $rows->map(function ($row) {
+				$record = (array) $row; 
+				unset($record['id']); 
+				return $record; 				
+			})->all();
             DB::table('urls')->insertOrIgnore($data);
         });
 
@@ -101,7 +107,7 @@ class RefreshPlaylist extends Command
         }
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; fr; rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13');
+        //curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; fr; rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13');
         $content = curl_exec($ch);
         if($content === false)
         {
@@ -122,11 +128,13 @@ class RefreshPlaylist extends Command
         $urls = [];
         $data = [];
         $bar = $this->output->createProgressBar(count(explode("\n",$playlist->content)));
+
         foreach (explode("\n",$playlist->content) as $row) {
-            $nb++;
             $bar->advance();
             if ($row != "#EXTM3U") {
                 if (stripos($row, "#EXTINF:-1") !== false) {
+					$nb++;
+
                     preg_match('/tvg-id="([^"]*)" tvg-name="((?:[^"]|"")+)" tvg-logo="([^"]*)" group-title="([^"]*)"/', $row, $matches);
                     $url =  [];
                     if (isset($matches[4])) {
@@ -193,7 +201,7 @@ class RefreshPlaylist extends Command
                             if ($nb >= 10000) {
                                 UrlImport::insert($data);
                                 $data = [];
-                                $nb = 0;
+                                $nb = 0;								
                                 //$this->createUrl($url, $playlist);
                             }
                             $urls[$url['url']] = 1;
