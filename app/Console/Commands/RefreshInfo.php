@@ -61,50 +61,57 @@ class RefreshInfo extends Command
         $nb = 0;
         $bar = $this->output->createProgressBar(Url::whereNull("imdb")->where("tvchannel","!=","1")
             ->where("filter","=",0)->count());
-        foreach (Url::whereNull("imdb")->where("tvchannel","!=","1")->where("filter","=",0)->get() as $url) {
-            $bar->advance();
-            $name = $url->name;
-            $name = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}]/u', '', $name);
-            $pos = stripos($name,"(");
 
-            if ($pos !== false ){
-                $name = trim(substr($name,0,$pos));
-            }
+		Url::whereNull("imdb")
+			->where("tvchannel", "!=", "1")
+			->where("filter", 0)
+			->chunk(100, function ($urls) use ($nb, $bar, $nbError, $search, $options, $tmdb) {
+				foreach ($urls as $url) {
+					$bar->advance();
+					$name = $url->name;
+					$name = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}]/u', '', $name);
+					$pos = stripos($name,"(");
 
-            try {
-                if ($url->movie == 1) {
-                    $responses = $search->movie($name, $options);
-                } else {
-                    $responses = $search->tvshow($name, $options);
-                }
+					if ($pos !== false ){
+						$name = trim(substr($name,0,$pos));
+					}
 
-                foreach ($responses as $response) {
-                    $item = new Item($tmdb);
-                    if ($url->movie == 1) {
-                        $infos = $item->getMovie($response->getId(), $options);
-                        $url->votes = $infos->getNbNotes();
-                    }else {
-                        $url->votes = 0;
-                        $infos = $item->getTVShow($response->getId(), $options);
-                    }
-                    $url->year = '';
-                    if ($infos->getReleaseDate() != '') {
-                        $url->year = substr($infos->getReleaseDate(), 0, 4);
-                    }
-                    $url->note = $infos->getNote();
-                    $url->imdb = $infos->getOverview();
-                    $url->picture = "https://image.tmdb.org/t/p/w300_and_h450_bestv2/".$infos->getPosterPath();
-                    $url->save();
-                    break;
-                }
-            }catch(\Exception $e){
-                $nbError++;
-                $url->imdb = "-";
-                $url->save();
-            }
+					try {
+						if ($url->movie == 1) {
+							$responses = $search->movie($name, $options);
+						} else {
+							$responses = $search->tvshow($name, $options);
+						}
 
-            $nb++;
-        }
+						foreach ($responses as $response) {
+							$item = new Item($tmdb);
+							if ($url->movie == 1) {
+								$infos = $item->getMovie($response->getId(), $options);
+								$url->votes = $infos->getNbNotes();
+							}else {
+								$url->votes = 0;
+								$infos = $item->getTVShow($response->getId(), $options);
+							}
+							$url->year = '';
+							if ($infos->getReleaseDate() != '') {
+								$url->year = substr($infos->getReleaseDate(), 0, 4);
+							}
+							$url->note = $infos->getNote();
+							$url->imdb = $infos->getOverview();
+							$url->picture = "https://image.tmdb.org/t/p/w300_and_h450_bestv2/".$infos->getPosterPath();
+							$url->save();
+							break;
+						}
+					}catch(\Exception $e){
+						echo $e->getMessage();exit();
+						$nbError++;
+						$url->imdb = "-";
+						$url->save();
+					}
+
+					$nb++;
+				}
+			});
 
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;

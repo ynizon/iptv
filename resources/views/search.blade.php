@@ -41,11 +41,13 @@
                                 <br/>
                                 <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
                                 <br/>
+                                <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}')"></i>
+                                <br/>
                                 @if ($url->note != '' && $url->note != 'N/A' && $url->note != '-1')
                                     <br/>
                                     {{round($url->note,2)}}
                                 @endif
-                                
+
                                 <div class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</div>
                             </div>
                             <div class="movie">
@@ -123,6 +125,8 @@
                                                                         <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                                                                         &nbsp;&nbsp;
                                                                         <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
+
+                                                                        <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}')"></i>
                                                                     </div>
                                                                 </li>
                                                             @endforeach
@@ -151,6 +155,8 @@
                                 <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                                 <br/>
                                 <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
+                                <br/>
+                                <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}')"></i>
                             </div>
                             <div class="movie">
                                 <a href="iptv://{{$url->urlFinal}}" data-id="{{$url->id}}">
@@ -176,7 +182,7 @@
     $(".tab-pane").removeClass("active");
     $(".tab-pane:first").addClass("active");
     $(".tab-pane:first").addClass("show");
-    
+
     function copyLink(url){
         navigator.clipboard.writeText(url);
     }

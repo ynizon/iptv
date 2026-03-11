@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Intervention\Image\ImageManager;
 use App\Models\Playlist;
 use App\Models\Url;
@@ -280,6 +281,22 @@ class SearchController extends Controller
         return view("view");
     }
 
+    public function add_tv(Request $request)
+    {
+        $user = Auth::user();
+        $user->url_stream = $request->input("url");
+        $user->save();
+    }
+
+    public function tv($md5) {
+        foreach (User::all() as $user){
+            if ($md5 == substr(md5($user->email), 0, 5)){
+                return redirect($user->url_stream);
+            }
+        }
+        exit();
+    }
+
     public function iptvreg() {
         $filePath = public_path('iptv/iptv.reg');
 
@@ -306,7 +323,7 @@ class SearchController extends Controller
 
     public function picture($id) {
         try {
-            $file = "images/playlist/$id.jpg";
+            $file = "images/playlist/$id/$id.jpg";
             if (file_exists(public_path($file))) {
                 return response()->file($file);
             }
@@ -357,9 +374,15 @@ class SearchController extends Controller
                 $manager = new ImageManager(
                     new \Intervention\Image\Drivers\Gd\Driver()
                 );
-                $width = 120;
+				$width = 120;
                 $height = 180;
-                $image = $manager->read($content);
+				$dir = public_path(dirname($file));
+				try {
+					mkdir($dir, 0755, true);
+				} catch (\Exception $e){
+					//Do nothing
+				}
+				$image = $manager->read($content);
                 $image->resize($width, $height);
                 $encoded = $image->toJpg();
                 $encoded->save($file);
@@ -372,4 +395,49 @@ class SearchController extends Controller
             return response()->file('images/default.webp');
         }
     }
+	
+	public function check($id){		
+		$url = Url::findOrFail($id);
+		if ($url->url != '') {
+			$ch = curl_init();
+					$headers = [
+				'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+				'Accept: */*',
+				'Accept-Language: fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+				'Range: bytes=0-1024', // On demande juste le premier Ko du film
+				'Connection: keep-alive',
+			];
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+			
+			// 2. On accepte tout type de contenu
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+				'Range: bytes=0-1', // On ne demande que le tout premier octet du film
+				'Connection: close'
+			));
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Suit les redirections
+			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  // Récupère la réponse sans l'afficher
+			curl_setopt($ch, CURLOPT_HEADER, false);           // Inclut les en-têtes dans la sortie
+			curl_setopt($ch, CURLOPT_NOBODY, true);           // N'inclut que les en-têtes dans la réponse
+
+			curl_setopt($ch, CURLOPT_URL, $url->url);
+			$returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			
+			$result = curl_exec($ch);
+
+			if ($result === false) {
+				// Affiche l'erreur précise (ex: "Could not resolve host" ou "Connection refused")
+				echo 'Erreur cURL : ' . curl_error($ch);
+			} else {
+				$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+				echo "Code HTTP : " . $httpCode;
+			}
+
+			curl_close($ch);
+
+			echo $returnCode;
+		}
+	}
 }

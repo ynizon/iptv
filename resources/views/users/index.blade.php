@@ -77,7 +77,11 @@
                                         <td class="align-middle bg-transparent border-bottom">
                                             {{$user->name}}
                                         </td>
-                                        <td class="align-middle bg-transparent border-bottom">{{$user->email}}</td>
+                                        <td class="align-middle bg-transparent border-bottom">{{$user->email}}
+                                        <br/>
+                                           <a href="/tv/{{substr(md5($user->email), 0, 5)}}">Url short: /tv/{{substr(md5($user->email), 0, 5)}}</a>
+                                        </td>
+
                                         <td class="align-middle bg-transparent border-bottom">
                                             <div class="form-check form-switch ps-0" style="display:inline-block">
                                                 <input class="form-check-input ms-auto" type="checkbox" value="1"

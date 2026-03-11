@@ -47,7 +47,7 @@ class RefreshPlaylist extends Command
      */
     public function handle(DatabaseManager $manager, Sqlite $sqlite)
     {
-		ini_set('memory_limit', '512M'); 
+		ini_set('memory_limit', '512M');
         UrlError::truncate();
         $sqlite->setWalJournalMode(
             $db = $sqlite->getDatabase($manager, 'sqlite')
@@ -71,9 +71,9 @@ class RefreshPlaylist extends Command
 
         DB::table('url_imports')->orderBy('id')->chunk(100, function ($rows) {
             $data = $rows->map(function ($row) {
-				$record = (array) $row; 
-				unset($record['id']); 
-				return $record; 				
+				$record = (array) $row;
+				unset($record['id']);
+				return $record;
 			})->all();
             DB::table('urls')->insertOrIgnore($data);
         });
@@ -87,12 +87,31 @@ class RefreshPlaylist extends Command
         $this->info("Finished : " . number_format($executionTime, 2) . " sec with ".UrlError::count() . " errors");
     }
 
+    protected function replaceDomainWithIp($url, $ip) {
+        $parts = parse_url($url);
+
+        $parts['host'] = $ip;
+
+        $scheme   = isset($parts['scheme']) ? $parts['scheme'] . '://' : '';
+        $host     = $parts['host'];
+        $port     = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $path     = isset($parts['path']) ? $parts['path'] : '';
+        $query    = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+
+        return "$scheme$host$port$path$query$fragment";
+    }
+
     protected function downloadFile($playlist)
     {
 
         $url = $playlist->url;
-        if ($playlist->tld != '' && $playlist->ip != '') {
-            $url = str_replace($playlist->tld, $playlist->ip, $url);
+        if ($playlist->tld === '*'){
+            $url = $this->replaceDomainWithIp($url, $playlist->ip);
+        } else {
+            if ($playlist->tld != '' && $playlist->ip != '') {
+                $url = str_replace($playlist->tld, $playlist->ip, $url);
+            }
         }
 
         $timeout = 120;
@@ -201,7 +220,7 @@ class RefreshPlaylist extends Command
                             if ($nb >= 10000) {
                                 UrlImport::insert($data);
                                 $data = [];
-                                $nb = 0;								
+                                $nb = 0;
                                 //$this->createUrl($url, $playlist);
                             }
                             $urls[$url['url']] = 1;

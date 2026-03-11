@@ -145,6 +145,22 @@
             });
         }
 
+        function addTvStream(button, url, shortcut)
+        {
+            navigator.clipboard.writeText(shortcut);
+            $(button).toggleClass("active");
+            $.ajax({
+                type: "POST",
+                url: "/add_tv",
+                data: {
+                    "url": url,
+                },
+            })
+            .done(function() {
+
+            });
+        }
+
         function showDescription(id, show) {
             if (show) {
                 $("#description-" +id).show();

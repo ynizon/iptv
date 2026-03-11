@@ -6,6 +6,7 @@ use App\Http\Controllers\FilterController;
 use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\M3uController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +36,8 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::post('/add_tv', [SearchController::class, 'add_tv']);
+Route::get('/tv/{md5}', [SearchController::class, 'tv']);
 Route::get('/download/iptvreg', [SearchController::class, 'iptvreg']);
 Route::get('/download/iptvsh', [SearchController::class, 'iptvsh']);
 Route::get('/download/iptvdesktop', [SearchController::class, 'iptvdesktop']);
@@ -52,6 +55,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('/filters', FilterController::class);
     Route::get('/dashboard', [SearchController::class, 'dashboard'])->name('dashboard');
     Route::post('/search', [SearchController::class, 'search'])->name('search');
+	Route::get('/m3u', [M3uController::class, 'm3u'])->name('edit');
+	Route::post('/m3u', [M3uController::class, 'm3u'])->name('edit');
     Route::get('/favorite/{id}', [SearchController::class, 'favorite'])->name('favorite');
     Route::post('/favorite_serie', [SearchController::class, 'favorite_serie'])->name('favorite_serie');
     Route::get('/remove/{id}', [SearchController::class, 'remove'])->name('remove');
@@ -61,6 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/counter/{id}/{counter}', [SearchController::class, 'counter'])->name('counter');
     Route::get('/view/{id}', [SearchController::class, 'view'])->name('view');
     Route::get('/picture/{id}', [SearchController::class, 'picture'])->name('picture');
+	Route::get('/check/{id}', [SearchController::class, 'check'])->name('check');
 });
 
 require __DIR__.'/auth.php';
