@@ -79,7 +79,7 @@
                                         </td>
                                         <td class="align-middle bg-transparent border-bottom">{{$user->email}}
                                         <br/>
-                                           <a href="/tv/{{substr(md5($user->email), 0, 5)}}">Url short: /tv/{{substr(md5($user->email), 0, 5)}}</a>
+                                           <a href="/tv/{{$user->tvToken()}}">Url short: /tv/{{$user->tvToken()}}</a>
                                         </td>
 
                                         <td class="align-middle bg-transparent border-bottom">

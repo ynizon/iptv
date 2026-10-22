@@ -36,8 +36,7 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::post('/add_tv', [SearchController::class, 'add_tv']);
-Route::get('/tv/{md5}', [SearchController::class, 'tv']);
+Route::get('/tv/{token}', [SearchController::class, 'tv']);
 Route::get('/download/iptvreg', [SearchController::class, 'iptvreg']);
 Route::get('/download/iptvsh', [SearchController::class, 'iptvsh']);
 Route::get('/download/iptvdesktop', [SearchController::class, 'iptvdesktop']);
@@ -67,6 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/view/{id}', [SearchController::class, 'view'])->name('view');
     Route::get('/picture/{id}', [SearchController::class, 'picture'])->name('picture');
 	Route::get('/check/{id}', [SearchController::class, 'check'])->name('check');
+    Route::post('/add_tv', [SearchController::class, 'add_tv'])->name('add_tv');
 });
 
 require __DIR__.'/auth.php';

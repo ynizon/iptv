@@ -284,17 +284,18 @@ class SearchController extends Controller
     public function add_tv(Request $request)
     {
         $user = Auth::user();
+        $request->validate(['url' => 'required|url']);
         $user->url_stream = $request->input("url");
         $user->save();
+        return response()->json(['ok' => true]);
     }
 
-    public function tv($md5) {
-        foreach (User::all() as $user){
-            if ($md5 == substr(md5($user->email), 0, 5)){
-                return redirect($user->url_stream);
-            }
+    public function tv($token) {
+        $user = User::where('tv_token', $token)->first();
+        if (!$user || !$user->url_stream) {
+            abort(404);
         }
-        exit();
+        return redirect($user->url_stream);
     }
 
     public function iptvreg() {

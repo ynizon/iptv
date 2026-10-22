@@ -41,7 +41,7 @@
                                 <br/>
                                 <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
                                 <br/>
-                                <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}')"></i>
+                                <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{Auth::user()->tvToken()}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{Auth::user()->tvToken()}}')"></i>
                                 <br/>
                                 @if ($url->note != '' && $url->note != 'N/A' && $url->note != '-1')
                                     <br/>
@@ -126,7 +126,7 @@
                                                                         &nbsp;&nbsp;
                                                                         <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
 
-                                                                        <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}')"></i>
+                                                                        <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{Auth::user()->tvToken()}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{Auth::user()->tvToken()}}')"></i>
                                                                     </div>
                                                                 </li>
                                                             @endforeach
@@ -156,7 +156,7 @@
                                 <br/>
                                 <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
                                 <br/>
-                                <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{substr(md5(Auth::user()->email), 0, 5)}}')"></i>
+                                <i class="fa fa-tv" title="{{config("app.url")}}/tv/{{Auth::user()->tvToken()}}" style="cursor: pointer" onclick="addTvStream(this, '{{$url->url}}', '{{config("app.url")}}/tv/{{Auth::user()->tvToken()}}')"></i>
                             </div>
                             <div class="movie">
                                 <a href="iptv://{{$url->urlFinal}}" data-id="{{$url->id}}">

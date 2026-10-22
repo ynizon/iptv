@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -61,5 +62,18 @@ class User extends Authenticatable
     {
         //Return the difference betweend user formats and all formats to hide this kind of movies
         return json_encode(array_diff(\App\Http\Controllers\SearchController::FILTERS, json_decode($this->formats)));
+    }
+
+    public function tvToken()
+    {
+        //Generate a random token for the short tv url on first use
+        if (!$this->tv_token) {
+            do {
+                $token = Str::random(16);
+            } while (self::where('tv_token', $token)->exists());
+            $this->tv_token = $token;
+            $this->save();
+        }
+        return $this->tv_token;
     }
 }
