@@ -10,13 +10,11 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Clone Laravel app
+# Clone Laravel app (kept with its .git, copied to /var/www at startup if the volume is empty)
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN git clone https://github.com/ynizon/iptv.git /app
-RUN mv /app/* /var/www/
+RUN git clone https://github.com/ynizon/iptv.git /opt/iptv
 
-# Create app directory
-WORKDIR /var/www
+WORKDIR /opt/iptv
 
 # Install dependencies
 RUN composer install --no-interaction
@@ -33,21 +31,16 @@ RUN chmod 0644 /etc/cron.d/laravel-cron
 # Apply cron job
 RUN crontab /etc/cron.d/laravel-cron
 
-# Create Laravel .env
-RUN cp /app/.env.example /var/www/.env && php artisan key:generate
+# Prepare /var/www (code, .env, database, migrations) at startup
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Ensure SQLite database file exists
-RUN touch /var/www/database/database.sqlite
-
-# Set proper permissions
-RUN chown -R www-data:www-data /app
-
-# Set key and data
-RUN php artisan key:generate && php artisan migrate --seed
+WORKDIR /var/www
 
 #Expose the port
 EXPOSE 80 443 5173 8000
 
+ENTRYPOINT ["docker-entrypoint.sh"]
+
 # Start cron + php command (use supervisord for production)
 CMD ["sh", "-c", "cd /var/www && cron && php artisan serve --host=0.0.0.0 --port=80 & npm run dev & wait"]
-
