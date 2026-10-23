@@ -278,6 +278,7 @@
         function setWatched(){
             clearInterval(myInterval);
             $("#eye-"+urlId).toggleClass("active");
+            catalogSync(urlId);
             $("#counter-"+urlId).html("");
             $("#counter-"+urlId).attr('data-min', 0);
             myModal.hide();
@@ -291,9 +292,12 @@
     <link rel="stylesheet" href="/fonts/fontawesome-all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link href="/assets/css/styles.css" rel="stylesheet" />
+    <link href="/assets/css/theme.css" rel="stylesheet" />
+    <link href="/assets/css/catalog.css" rel="stylesheet" />
+    <script src="/assets/js/catalog.js"></script>
 </head>
 
-<body class="g-sidenav-show  bg-gray-100">
+<body class="g-sidenav-show theme-dark">
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <x-app.sidebar />

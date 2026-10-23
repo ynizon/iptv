@@ -59,7 +59,11 @@ class RefreshInfo extends Command
         $search    = new Search($tmdb);
 
         $nb = 0;
-        $query = Url::whereNull("imdb")->where("tvchannel", "!=", "1")->where("filter", 0);
+        $query = Url::where("tvchannel", "!=", "1")->where("filter", 0)
+            ->where(function ($query) {
+                // Series rated before their number of votes was stored
+                $query->whereNull("imdb")->orWhere(fn ($q) => $q->where("serie", 1)->where("votes", "<=", 0)->where("note", ">", 0));
+            });
         $limit = (int) $this->option('limit');
         $bar = $this->output->createProgressBar($limit > 0 ? min($limit, $query->count()) : $query->count());
 
@@ -105,6 +109,8 @@ class RefreshInfo extends Command
             }
         });
 
+        Url::computeScores();
+
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         $this->info("");
@@ -148,7 +154,7 @@ class RefreshInfo extends Command
                     : $item->getTVShow($response->getId(), $options);
 
                 return [
-                    'votes' => $isMovie ? $infos->getNbNotes() : 0,
+                    'votes' => $infos->getNbNotes(),
                     'year' => $infos->getReleaseDate() != '' ? substr($infos->getReleaseDate(), 0, 4) : '',
                     'note' => $infos->getNote(),
                     'overview' => (string) $infos->getOverview(),

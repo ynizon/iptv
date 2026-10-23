@@ -1,78 +1,21 @@
-<x-app-layout>
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
-        <div class="container-fluid py-4">
-            <div class="mt-4 row">
-                <div class="col-12">
-                    <a href="/settings" style="text-align: left">< {{__("Back")}}</a>
-                    <div class="card">
-                        <div class="pb-0 card-header">
-                            <div class="row">
-                                <div class="col-6">
-                                    <h5 class="">{{__('Filters')}}</h5>
-                                    <p class="mb-0 text-sm">
+<x-settings.page :title="__('Filters')" :subtitle="__('Hide every category whose name contains one of these words, for example the categories of other countries.')" wide>
+    <x-slot name="actions">
+        <a href="/filters/create" class="set-btn set-btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            {{__('New filter')}}
+        </a>
+    </x-slot>
 
-                                    </p>
-                                </div>
-                                <div class="col-6 text-end">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row justify-content-center">
-                            <div class="col-md-12 px-4">
-                                @if (session('success'))
-                                    <div class="alert alert-success" role="alert" id="alert">
-                                        {{ session('success') }}
-                                    </div>
-                                @endif
-                                @if (session('error'))
-                                    <div class="alert alert-danger" role="alert" id="alert">
-                                        {{ session('error') }}
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                            <div class="table-responsive">
-                                <table class="table text-secondary text-center" id="datatable">
-                                    <thead class="bg-gray-100">
-                                    <tr>
-                                        <th
-                                            class="text-left text-uppercase font-weight-bold bg-transparent border-bottom text-secondary">
-                                            {{__("Name")}}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex px-2">
-                                                <a href="/filters/create" class="list_task_item">
-                                                    <h6 class="mb-0 text-sm">
-                                                        {{__('New filter')}}
-                                                    </h6>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @foreach($filters as $filter)
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex px-2">
-                                                    <a href="/filters/{{$filter->id}}/edit" class="list_task_item">
-                                                        <h6 class="mb-0 text-sm">
-                                                            {{$filter->name}}
-                                                        </h6>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="set-list">
+        @forelse ($filters as $filter)
+            <div class="set-list-row">
+                <a href="/filters/{{$filter->id}}/edit" class="set-item">
+                    <span class="set-item-main"><strong>{{$filter->name}}</strong></span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                </a>
             </div>
-            <x-app.footer />
-        </div>
-    </main>
-</x-app-layout>
+        @empty
+            <div class="set-empty">{{__('No filter yet.')}}</div>
+        @endforelse
+    </div>
+</x-settings.page>

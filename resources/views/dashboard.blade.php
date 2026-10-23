@@ -1,5 +1,5 @@
 <x-app-layout>
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg catalog-page">
         <div class="container-fluid py-4">
             <div class="row justify-content-center">
                 <div class="col-md-12 px-4">

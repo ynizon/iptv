@@ -1,66 +1,37 @@
-<x-app-layout>
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
-        <div class="container-fluid py-4">
-            <div class="row justify-content-center">
-                <div class="col-md-12 px-4">
-                    @if (session('success'))
-                        <div class="alert alert-success" role="alert" id="alert">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-                    @if (session('error'))
-                        <div class="alert alert-danger" role="alert" id="alert">
-                            {{ session('error') }}
-                        </div>
-                    @endif
-                </div>
+<x-settings.page :title="$user->id > 0 ? __('Edit the user') : __('New user')" back="/users" :backLabel="__('Users')">
+    <form class="set-card" method="post"
+          action="{{ $user->id > 0 ? route('users.update', $user->id) : route('users.store') }}">
+        @if ($user->id > 0)
+            @method('PUT')
+        @endif
+        @csrf
+        <div class="set-row">
+            <div class="set-field">
+                <label for="name">{{__('Name')}}</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $user->name) }}" required autofocus>
             </div>
-            <div class="row">
-
+            <div class="set-field">
+                <label for="email">{{__('Email')}}</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $user->email) }}" required>
             </div>
-            <div class="row">
-                <div class="col-lg-8 col-md-8">
-                    <a href="/settings" style="text-align: left">< {{__("Back")}}</a>
-                    <form action="@if ($user->id > 0) {{ route('users.update', $user->id) }} @else {{ route('users.store') }} @endif"
-                          method="post" >
-                        @if ($user->id > 0)
-                            @method('PUT')
-                        @endif
-                        @csrf
-                        <div class="form-group">
-                            <label for="name">{{__('Name')}}</label>
-                            <input type="text" class="form-control" id="name" name="name"
-                                   value="{{$user->name}}" required>
-                        </div>
-                        @if ($user->id == 0)
-                            <div class="form-group">
-                                <label for="password">{{__('Password')}}</label>
-                                <input type="password" class="form-control" id="password" name="password"
-                                       value="" required>
-                            </div>
-                        @endif
-                        <div class="form-group">
-                            <label for="url">{{__('Email')}}</label>
-                            <input type="email" class="form-control" id="url" name="email"
-                                   value="{{$user->email}}" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="url">{{__('Role')}}</label>
-                            <select name="admin" class="form-control">
-                                <option value="0">{{__("User")}}</option>
-                                <option value="1">{{__("Admin")}}</option>
-                            </select>
-                        </div>
-
-                        <br>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="pad fas fa-save" aria-hidden="true"></i> {{__("Save")}}
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <x-app.footer />
         </div>
-    </main>
-</x-app-layout>
+        @if ($user->id == 0)
+            <div class="set-field">
+                <label for="password">{{__('Password')}}</label>
+                <input type="password" class="form-control" id="password" name="password" required autocomplete="new-password">
+            </div>
+        @endif
+        <div class="set-field">
+            <label for="admin">{{__('Role')}}</label>
+            <select id="admin" name="admin" class="form-control" aria-describedby="admin-help">
+                <option value="0" @selected(!old('admin', $user->admin))>{{__("User")}}</option>
+                <option value="1" @selected(old('admin', $user->admin))>{{__("Admin")}}</option>
+            </select>
+            <p class="set-help" id="admin-help">{{__('An administrator manages the users.')}}</p>
+        </div>
+        <div class="set-actions">
+            <button type="submit" class="set-btn set-btn-primary">{{__('Save')}}</button>
+            <a href="/users" class="set-btn set-btn-ghost">{{__('Cancel')}}</a>
+        </div>
+    </form>
+</x-settings.page>

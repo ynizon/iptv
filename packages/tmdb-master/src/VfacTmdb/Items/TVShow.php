@@ -77,6 +77,18 @@ class TVShow extends Item implements TVShowInterface
     }
 
     /**
+     * Get TVshow number of votes
+     * @return float
+     */
+    public function getNbNotes() : float
+    {
+        if (isset($this->data->vote_count)) {
+            return $this->data->vote_count;
+        }
+        return 0;
+    }
+
+    /**
      * Get TVshow number of episodes
      * @return int
      */

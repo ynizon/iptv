@@ -72,15 +72,20 @@ class SearchController extends Controller
                 }
             }
         }
-        $urlsTmp = $urlsTmp->orderBy("name")->limit(3000)->get();
+        // One limit per type: with a shared one, the episodes of the best rated series took every place,
+        // and the channels (no rating) were always cut. Movies and episodes: best rated first
+        $movies = (clone $urlsTmp)->where("movie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
+        $episodes = (clone $urlsTmp)->where("serie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
+        $channels = $urlsTmp->where("tvchannel", 1)->orderBy("name")->limit(3000)->get();
+        $urlsTmp = $movies->concat($episodes)->concat($channels);
         $urls = [
                 "movies" => [],
                 "series" => [],
                 "channels" => [],
             ];
 
-        $pictures = [];
-        $descriptions = [];
+        // First episode of each series: its picture, note and description stand for the series
+        $firstEpisodes = [];
         foreach ($urlsTmp as $url) {
             $ok = true;
             foreach ($formats as $format) {
@@ -109,8 +114,7 @@ class SearchController extends Controller
                     }
                     if (!isset($urls["series"][$name]))  {
                         $urls["series"][$name] = [];
-                        $pictures[$name] = $url->id;
-                        $descriptions[$name] = $url->imdb;
+                        $firstEpisodes[$name] = $url;
                     }
                     if (!isset($urls["series"][$name][$season]))  {
                         $urls["series"][$name][$season] = [];
@@ -155,7 +159,7 @@ class SearchController extends Controller
         }
         fclose($fp);
 
-        return view("search", compact("urls", "pictures", "warnings", "descriptions"));
+        return view("search", compact("urls", "firstEpisodes", "warnings"));
     }
 
     private function replaceUrlDns($url){
@@ -321,6 +325,10 @@ class SearchController extends Controller
         $default = public_path('images/default.webp');
         try {
             $file = public_path("images/playlist/$id/$id.jpg");
+            $logo = public_path("images/playlist/$id/logo.jpg");
+            if (file_exists($logo)) {
+                return response()->file($logo);
+            }
             if (file_exists($file)) {
                 return response()->file($file);
             }
@@ -328,8 +336,14 @@ class SearchController extends Controller
             $url = Url::findOrFail($id);
             $content = $url->picture != '' ? $this->downloadPicture(Url::normalizePicture($url->picture)) : false;
             if ($content === false) {
-                // Not cached: the picture will be tried again next time
-                return response()->file($default);
+                // Not cached: the picture will be tried again next time.
+                // A channel shows its name instead (the page handles the 404)
+                return $url->tvchannel ? response("", 404) : response()->file($default);
+            }
+
+            if ($url->tvchannel && extension_loaded('gd')) {
+                $this->saveLogoTile($content, $logo);
+                return response()->file($logo);
             }
 
             if (extension_loaded('gd')) {
@@ -355,6 +369,61 @@ class SearchController extends Controller
     }
 
     /**
+     * A channel logo on a 16:9 tile, not stretched: transparent logos are mostly black or white,
+     * so the tile is dark for a light logo and light for a dark one
+     */
+    private function saveLogoTile(string $content, string $file): void {
+        $width = 320;
+        $height = 180;
+        $padding = 20;
+
+        $source = imagecreatefromstring($content);
+        if ($source === false) {
+            throw new Exception("Not an image");
+        }
+        $sourceWidth = imagesx($source);
+        $sourceHeight = imagesy($source);
+
+        // Average lightness of the visible pixels, on a small copy
+        $sample = imagecreatetruecolor(32, 18);
+        imagealphablending($sample, false);
+        imagesavealpha($sample, true);
+        imagefill($sample, 0, 0, imagecolorallocatealpha($sample, 0, 0, 0, 127));
+        imagecopyresampled($sample, $source, 0, 0, 0, 0, 32, 18, $sourceWidth, $sourceHeight);
+        $lightness = 0;
+        $weight = 0;
+        $transparent = 0;
+        for ($x = 0; $x < 32; $x++) {
+            for ($y = 0; $y < 18; $y++) {
+                $color = imagecolorsforindex($sample, imagecolorat($sample, $x, $y));
+                $opacity = (127 - $color['alpha']) / 127;
+                if ($opacity < 0.5) {
+                    $transparent++;
+                }
+                $lightness += $opacity * (0.2126 * $color['red'] + 0.7152 * $color['green'] + 0.0722 * $color['blue']) / 255;
+                $weight += $opacity;
+            }
+        }
+        $lightLogo = $weight > 0 && $lightness / $weight > 0.55;
+        // An opaque logo brings its own background: keep the dark tile of the page
+        $background = ($lightLogo || $transparent == 0) ? [0x1B, 0x20, 0x28] : [0xE8, 0xEA, 0xED];
+
+        $tile = imagecreatetruecolor($width, $height);
+        imagefill($tile, 0, 0, imagecolorallocate($tile, ...$background));
+        imagealphablending($tile, true);
+        $scale = min(($width - 2 * $padding) / $sourceWidth, ($height - 2 * $padding) / $sourceHeight);
+        $logoWidth = (int) round($sourceWidth * $scale);
+        $logoHeight = (int) round($sourceHeight * $scale);
+        imagecopyresampled($tile, $source, intdiv($width - $logoWidth, 2), intdiv($height - $logoHeight, 2),
+            0, 0, $logoWidth, $logoHeight, $sourceWidth, $sourceHeight);
+
+        if (!is_dir(dirname($file))) {
+            mkdir(dirname($file), 0755, true);
+        }
+        imagejpeg($tile, $file, 88);
+    }
+
+    /**
      * Download a picture, false when it is not reachable or not an image
      */
     private function downloadPicture(string $picture): string|false {
@@ -366,9 +435,11 @@ class SearchController extends Controller
         $content = curl_exec($ch);
         $returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        // Deleted imgur pictures redirect to their "removed" picture
+        $removed = str_starts_with(basename((string) parse_url((string) curl_getinfo($ch, CURLINFO_EFFECTIVE_URL), PHP_URL_PATH)), "removed.");
         curl_close($ch);
 
-        if ($content === false || $content === '' || $returnCode != 200 || stripos($contentType, 'image/') !== 0) {
+        if ($content === false || $content === '' || $returnCode != 200 || stripos($contentType, 'image/') !== 0 || $removed) {
             return false;
         }
 

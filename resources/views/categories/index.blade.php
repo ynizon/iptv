@@ -1,78 +1,24 @@
-<x-app-layout>
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
-        <div class="container-fluid py-4">
-            <div class="mt-4 row">
-                <div class="col-12">
-                    <a href="/settings" style="text-align: left">< {{__("Back")}}</a>
-                    <div class="card">
-                        <div class="pb-0 card-header">
-                            <div class="row">
-                                <div class="col-6">
-                                    <h5 class="">{{__('Categories')}}</h5>
-                                    <p class="mb-0 text-sm">
+<x-settings.page :title="__('Categories')" :subtitle="__('Rename the categories of the playlist. Categories that end up with the same name are grouped in the menu.')" wide>
+    <x-slot name="actions">
+        <a href="/categories/create" class="set-btn set-btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            {{__('New rule')}}
+        </a>
+    </x-slot>
 
-                                    </p>
-                                </div>
-                                <div class="col-6 text-end">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row justify-content-center">
-                            <div class="col-md-12 px-4">
-                                @if (session('success'))
-                                    <div class="alert alert-success" role="alert" id="alert">
-                                        {{ session('success') }}
-                                    </div>
-                                @endif
-                                @if (session('error'))
-                                    <div class="alert alert-danger" role="alert" id="alert">
-                                        {{ session('error') }}
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                            <div class="table-responsive">
-                                <table class="table text-secondary text-center" id="datatable">
-                                    <thead class="bg-gray-100">
-                                    <tr>
-                                        <th
-                                            class="text-left text-uppercase font-weight-bold bg-transparent border-bottom text-secondary">
-                                            {{__("From")}} -> {{__("To")}}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex px-2">
-                                                <a href="/categories/create" class="list_task_item">
-                                                    <h6 class="mb-0 text-sm">
-                                                        {{__('New category')}}
-                                                    </h6>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @foreach($categories as $category)
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex px-2">
-                                                    <a href="/categories/{{$category->id}}/edit" class="list_task_item">
-                                                        <h6 class="mb-0 text-sm">
-                                                            {{$category->from}} -> {{$category->to}}
-                                                        </h6>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="set-list">
+        @forelse ($categories as $category)
+            <div class="set-list-row">
+                <a href="/categories/{{$category->id}}/edit" class="set-item">
+                    <span class="set-item-main">
+                        <strong>{{$category->from}}</strong>
+                        <span><span class="set-arrow" aria-hidden="true">→</span>{{ $category->to != '' ? $category->to : __('(removed from the name)') }}</span>
+                    </span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                </a>
             </div>
-            <x-app.footer />
-        </div>
-    </main>
-</x-app-layout>
+        @empty
+            <div class="set-empty">{{__('No rule yet.')}}</div>
+        @endforelse
+    </div>
+</x-settings.page>
