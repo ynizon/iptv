@@ -1,8 +1,4 @@
-@foreach($warnings as $warning)
-    <div class="alert alert-warning" role="alert">
-        <i class="fa fa-warning"></i>&nbsp; {{$warning['from'] . ' (- ' . $warning['counter'] . ') : ' . $warning['user'] . __(" is watching ") . $warning['name']}}
-    </div>
-@endforeach
+@include('partials.warnings')
 <ul class="nav nav-tabs">
     @if (count($urls["movies"]) > 0)
         <li class="nav-item">
@@ -33,9 +29,9 @@
                         <div>
                             <div style="float:left;width:20px;">
                                 <br/>
-                                <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
+                                <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(Auth::id())) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                                 <br/>
-                                <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                                <i class="fa fa-heart @if ($url->isFavorite(Auth::id())) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                                 <br/>
                                 <i class="fa fa-remove" style="cursor: pointer" onclick="remove(this, {{$url->id}})"></i>
                                 <br/>
@@ -86,7 +82,7 @@
                             <div>
                                 <div style="float:left;padding-left:15px;">
                                     @if (isset($seasons['01']['01']))
-                                        <i class="fa fa-heart @if ($seasons['01']['01']->isFavorite(1)) active @endif"
+                                        <i class="fa fa-heart @if ($seasons['01']['01']->isFavorite(Auth::id())) active @endif"
                                            style="cursor: pointer" onclick="addFavoriteSerie(this, '{{$serie}}')"></i>
                                         <br/>
                                         <i class="fa fa-remove" style="cursor: pointer" onclick="removeSerie(this, '{{$serie}}')"></i>
@@ -122,7 +118,7 @@
                                                                         </a>
                                                                         <span id="urlname-{{$url->id}}">{{$url->name}}</span>
                                                                         <span class="counter" data-min="{{$url->counterMin(Auth::user()->id)}}" id="counter-{{$url->id}}">{{$url->counter(Auth::user()->id)}}</span>
-                                                                        <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(1)) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
+                                                                        <i id="eye-{{$url->id}}" class="fa fa-eye @if ($url->isWatched(Auth::id())) active @endif" style="cursor: pointer" onclick="addWatched(this, {{$url->id}})"></i>
                                                                         &nbsp;&nbsp;
                                                                         <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
 
@@ -152,7 +148,7 @@
                         <div style="clear:both">
                             <div style="float:left;width:20px;">
                                 <br/>
-                                <i class="fa fa-heart @if ($url->isFavorite(1)) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
+                                <i class="fa fa-heart @if ($url->isFavorite(Auth::id())) active @endif" style="cursor: pointer" onclick="addFavorite(this, {{$url->id}})"></i>
                                 <br/>
                                 <i class="fa fa-copy" style="cursor: pointer" onclick="copyLink('{{$url->urlFinal}}')"></i>
                                 <br/>

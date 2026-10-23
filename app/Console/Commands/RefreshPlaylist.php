@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Helpers\Sqlite;
-use App\Models\Filter;
 use App\Models\Playlist;
 use App\Models\Url;
 use App\Models\UrlError;
@@ -159,7 +158,7 @@ class RefreshPlaylist extends Command
                     if (isset($matches[4])) {
                         //                    $tvg_id = $matches[1];
                         $tvg_name = trim($matches[2]);
-                        $tvg_logo = trim($matches[3]);
+                        $tvg_logo = Url::normalizePicture(trim($matches[3]));
                         $group_title = trim($matches[4]);
                         $serie = 0;
                         $movie = 1;
@@ -255,14 +254,7 @@ class RefreshPlaylist extends Command
     }
 
     protected function filterUrls() {
-        $bar = $this->output->createProgressBar(count($this->tvChannels) + count(Filter::all()));
-        foreach (Filter::all() as $filter) {
-            $bar->advance();
-            Url::where("name", "like", "%" . $filter->name . "%")
-                ->orWhere("category", "like", "%" . $filter->name . "%")
-                ->update(["filter" => 1]);
-        }
-
+        $bar = $this->output->createProgressBar(count($this->tvChannels));
         foreach ($this->tvChannels as $tvChannel) {
             $bar->advance();
             Url::where("category", "like", "%" . $tvChannel . "%")
@@ -270,6 +262,7 @@ class RefreshPlaylist extends Command
                 ->update(["tvchannel" => 1 , "movie" =>0, "serie" =>0]);
         }
 
+        Url::applyFilters();
         $this->info('');
     }
 }

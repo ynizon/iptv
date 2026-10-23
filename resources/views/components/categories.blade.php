@@ -10,7 +10,7 @@
 @foreach ($categories as $category)
     @if ($category != '')
         <li style="cursor: pointer" class="category"
-            data-category="{{$originalCategories[$category]}}"><i class="fa fa-list m3u"></i> &nbsp;
+            data-category="{{$category}}"><i class="fa fa-list m3u"></i> &nbsp;
             <span>{{$category}}</span></li>
     @endif
 @endforeach

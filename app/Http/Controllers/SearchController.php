@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\User;
 use Intervention\Image\ImageManager;
 use App\Models\Playlist;
@@ -19,7 +20,8 @@ class SearchController extends Controller
 
     public function __construct(protected $replaceDns = [])
     {
-        $playlists = Playlist::all();
+        // Not the "content" column: it holds the whole M3U file
+        $playlists = Playlist::select("tld", "ip")->get();
         foreach ($playlists as $playlist){
             if ($playlist->tld != '' && $playlist->ip != '') {
                 $this->replaceDns[$playlist->tld] = $playlist->ip;
@@ -28,15 +30,7 @@ class SearchController extends Controller
     }
 
     public function dashboard(){
-        $categories = [];
-        $urls = DB::table('urls')->select('category')->where("filter","=",0)
-            ->distinct()->orderBy("category")->get();
-        foreach ($urls as $url)
-        {
-            $categories[] = $url->category;
-        }
-
-        return view('dashboard', compact("categories"));
+        return view('dashboard');
     }
 
     public function settings(Request $request) {
@@ -74,7 +68,7 @@ class SearchController extends Controller
                         ->orderBy("read_at","desc");
                 } else {
                     //Category
-                    $urlsTmp->where("category" , "=", $category);
+                    $urlsTmp->whereIn("category", Category::groups()[$category] ?? [$category]);
                 }
             }
         }
@@ -140,7 +134,8 @@ class SearchController extends Controller
                 $warnings[$view->user->id] = ['user' => $view->user->name,
                     'from' => substr(substr($view->read_at, -8), 0, 5),
                     'counter' => Url::formatHour($view->counter),
-                    'name' => Url::where("url", "=", $view->url)->first()->name];
+                    // The url may have left the playlist since
+                    'name' => Url::where("url", "=", $view->url)->value("name") ?? "?"];
             }
         }
 
@@ -323,78 +318,61 @@ class SearchController extends Controller
     }
 
     public function picture($id) {
+        $default = public_path('images/default.webp');
         try {
-            $file = "images/playlist/$id/$id.jpg";
-            if (file_exists(public_path($file))) {
+            $file = public_path("images/playlist/$id/$id.jpg");
+            if (file_exists($file)) {
                 return response()->file($file);
             }
 
-            $ctype = "image/webp";
-            $content = file_get_contents(public_path('images/default.webp'));
-
             $url = Url::findOrFail($id);
-            if ($url->picture != '') {
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  // Récupère la réponse sans l'afficher
-                curl_setopt($ch, CURLOPT_HEADER, false);           // Inclut les en-têtes dans la sortie
-                curl_setopt($ch, CURLOPT_NOBODY, false);           // N'inclut que les en-têtes dans la réponse
-
-                curl_setopt($ch, CURLOPT_URL, $url->picture);
-                $returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                if (0 == $returnCode || 200 == $returnCode) {
-                    $filename = basename($url->picture);
-                    $file_extension = strtolower(substr(strrchr($filename, "."), 1));
-
-                    $content2 = curl_exec($ch);
-                    if ($content2 != '') {
-                        $content = $content2;
-                        switch ($file_extension) {
-                            case "gif":
-                                $ctype = "image/gif";
-                                break;
-                            case "png":
-                                $ctype = "image/png";
-                                break;
-                            case "webp":
-                                $ctype = "image/webp";
-                                break;
-                            case "jpeg":
-                            case "jpg":
-                                $ctype = "image/jpeg";
-                                break;
-                            case "svg":
-                                $ctype = "image/svg+xml";
-                                break;
-                            default:
-                        }
-                    }
-                }
+            $content = $url->picture != '' ? $this->downloadPicture(Url::normalizePicture($url->picture)) : false;
+            if ($content === false) {
+                // Not cached: the picture will be tried again next time
+                return response()->file($default);
             }
 
             if (extension_loaded('gd')) {
                 $manager = new ImageManager(
                     new \Intervention\Image\Drivers\Gd\Driver()
                 );
-				$width = 120;
+                $width = 120;
                 $height = 180;
-				$dir = public_path(dirname($file));
-				try {
-					mkdir($dir, 0755, true);
-				} catch (\Exception $e){
-					//Do nothing
-				}
-				$image = $manager->read($content);
+                if (!is_dir(dirname($file))) {
+                    mkdir(dirname($file), 0755, true);
+                }
+                $image = $manager->read($content);
                 $image->resize($width, $height);
-                $encoded = $image->toJpg();
-                $encoded->save($file);
+                $image->toJpg()->save($file);
                 return response()->file($file);
             } else {
-                header('Content-type: ' . $ctype);
-                echo $content;
+                $ctype = (new \finfo(FILEINFO_MIME_TYPE))->buffer($content);
+                return response($content)->header('Content-Type', $ctype);
             }
-        }catch(Exception $e) {
-            return response()->file('images/default.webp');
+        } catch (\Throwable $e) {
+            return response()->file($default);
         }
+    }
+
+    /**
+     * Download a picture, false when it is not reachable or not an image
+     */
+    private function downloadPicture(string $picture): string|false {
+        $ch = curl_init($picture);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        $content = curl_exec($ch);
+        $returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        curl_close($ch);
+
+        if ($content === false || $content === '' || $returnCode != 200 || stripos($contentType, 'image/') !== 0) {
+            return false;
+        }
+
+        return $content;
     }
 	
 	public function check($id){		

@@ -34,8 +34,8 @@ class FilterController extends Controller
         $validated = [];
         $validated['name'] = $request->input('name');
         Filter::create($validated);
+        Url::applyFilters();
 
-        $this->filterUrls($request->input('name'), true);
         return redirect()->route('filters.index')
             ->with('success',__('Filter created successfully.'));
 
@@ -65,9 +65,8 @@ class FilterController extends Controller
     {
         $validated = [];
         $validated['name'] = $request->input('name');
-        $this->filterUrls($filter->name, false);
-        $this->filterUrls($request->input('name'), true);
         $filter->update($validated);
+        Url::applyFilters();
         return redirect()->route('filters.index')
             ->with('success', __('Filter updated successfully.'));
 
@@ -79,21 +78,8 @@ class FilterController extends Controller
     public function destroy(Filter $filter)
     {
         $filter->delete();
+        Url::applyFilters();
         return redirect()->route('filters.index')
             ->with('success', __('Filter deleted successfully.'));
-    }
-
-    /**
-     * Add or remove filter on urls
-     * @param $filterName
-     * @param $add
-     * @return void
-     */
-    protected function filterUrls($filterName , $add = false) {
-        $urls = Url::where("name","like","%".$filterName."%")->orWhere("category","like","%".$filterName."%")->get();
-        foreach ($urls as $url){
-            $url->filter = (int) $add;
-            $url->save();
-        }
     }
 }

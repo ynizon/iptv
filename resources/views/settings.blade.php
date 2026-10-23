@@ -29,6 +29,8 @@
                             <a class="tl" href="/filters">{{__("Filters")}}</a>
                             <br/>
                             <a class="tl" href="/categories">{{__("Categories")}}</a>
+                            <br/>
+                            <a class="tl" href="/visible-categories">{{__("Visible categories")}}</a>
 
                             @if (Auth::user()->isAdmin())
                                 <br/>

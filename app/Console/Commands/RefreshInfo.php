@@ -28,7 +28,7 @@ class RefreshInfo extends Command
      *
      * @var string
      */
-    protected $signature = 'refresh:info';
+    protected $signature = 'refresh:info {--limit=0 : Number of urls to process, 0 for all}';
 
     /**
      * The console command description.
@@ -59,63 +59,106 @@ class RefreshInfo extends Command
         $search    = new Search($tmdb);
 
         $nb = 0;
-        $bar = $this->output->createProgressBar(Url::whereNull("imdb")->where("tvchannel","!=","1")
-            ->where("filter","=",0)->count());
+        $query = Url::whereNull("imdb")->where("tvchannel", "!=", "1")->where("filter", 0);
+        $limit = (int) $this->option('limit');
+        $bar = $this->output->createProgressBar($limit > 0 ? min($limit, $query->count()) : $query->count());
 
-		Url::whereNull("imdb")
-			->where("tvchannel", "!=", "1")
-			->where("filter", 0)
-			->chunk(100, function ($urls) use ($nb, $bar, $nbError, $search, $options, $tmdb) {
-				foreach ($urls as $url) {
-					$bar->advance();
-					$name = $url->name;
-					$name = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}]/u', '', $name);
-					$pos = stripos($name,"(");
+        // One TMDB lookup per title: all the episodes of a series share it
+        $found = [];
+        // chunkById, as "imdb" (the filtered column) changes while iterating
+        $query->chunkById(100, function ($urls) use (&$nb, &$nbError, &$found, $limit, $bar, $search, $options, $tmdb) {
+            foreach ($urls as $url) {
+                if ($limit > 0 && $nb >= $limit) {
+                    return false;
+                }
+                $bar->advance();
+                $nb++;
 
-					if ($pos !== false ){
-						$name = trim(substr($name,0,$pos));
-					}
+                $isMovie = $url->movie == 1;
+                $name = $this->searchName($url->name);
+                $key = ($isMovie ? "movie:" : "tv:") . mb_strtolower($name);
+                if (!array_key_exists($key, $found)) {
+                    try {
+                        $found[$key] = $this->findInfos($search, $tmdb, $isMovie, $name, $options);
+                    } catch (\Exception $e) {
+                        // Left as is, so it is tried again next time
+                        $this->error(" " . $url->id . " " . $name . " : " . $e->getMessage());
+                        $nbError++;
+                        continue;
+                    }
+                }
 
-					try {
-						if ($url->movie == 1) {
-							$responses = $search->movie($name, $options);
-						} else {
-							$responses = $search->tvshow($name, $options);
-						}
-
-						foreach ($responses as $response) {
-							$item = new Item($tmdb);
-							if ($url->movie == 1) {
-								$infos = $item->getMovie($response->getId(), $options);
-								$url->votes = $infos->getNbNotes();
-							}else {
-								$url->votes = 0;
-								$infos = $item->getTVShow($response->getId(), $options);
-							}
-							$url->year = '';
-							if ($infos->getReleaseDate() != '') {
-								$url->year = substr($infos->getReleaseDate(), 0, 4);
-							}
-							$url->note = $infos->getNote();
-							$url->imdb = $infos->getOverview();
-							$url->picture = "https://image.tmdb.org/t/p/w300_and_h450_bestv2/".$infos->getPosterPath();
-							$url->save();
-							break;
-						}
-					}catch(\Exception $e){
-						echo $e->getMessage();exit();
-						$nbError++;
-						$url->imdb = "-";
-						$url->save();
-					}
-
-					$nb++;
-				}
-			});
+                $infos = $found[$key];
+                if ($infos === null) {
+                    continue;
+                }
+                $url->votes = $infos['votes'];
+                $url->year = $infos['year'];
+                $url->note = $infos['note'];
+                $url->imdb = $infos['overview'];
+                if ($infos['poster'] != '' && $url->picture != $infos['poster']) {
+                    $url->picture = $infos['poster'];
+                    // Drop the resized copy of the previous picture
+                    @unlink(public_path("images/playlist/{$url->id}/{$url->id}.jpg"));
+                }
+                $url->save();
+            }
+        });
 
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         $this->info("");
         $this->info("Finished : " . number_format($executionTime, 2) . " sec with ". $nbError . " errors");
+    }
+
+    /**
+     * "|FR| The Handmaid’s Tale : La Servante (MULTI) HD S01 E01" -> "The Handmaid's Tale : La Servante"
+     */
+    protected function searchName(string $name): string
+    {
+        $name = str_replace(["’", "‘"], "'", $name);
+        // Before the cleaning below, which removes the "|"
+        $name = preg_replace('/^\|[^|]*\|\s*/', '', $name);
+        $name = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}]/u', '', $name);
+        $name = preg_replace('/\s*S\d{2} E\d{2}.*$/', '', $name);
+        $pos = stripos($name, "(");
+        if ($pos !== false) {
+            $name = substr($name, 0, $pos);
+        }
+
+        return trim($name);
+    }
+
+    /**
+     * Search TMDB with the full title, then with each side of "Original title : French title"
+     * @return array|null votes, year, note, overview, poster
+     */
+    protected function findInfos(Search $search, $tmdb, bool $isMovie, string $name, array $options): ?array
+    {
+        $names = array_unique(array_merge([$name], array_map('trim', explode(" : ", $name))));
+        foreach ($names as $searchName) {
+            if ($searchName == '') {
+                continue;
+            }
+            $responses = $isMovie ? $search->movie($searchName, $options) : $search->tvshow($searchName, $options);
+            foreach ($responses as $response) {
+                $item = new Item($tmdb);
+                $infos = $isMovie
+                    ? $item->getMovie($response->getId(), $options)
+                    : $item->getTVShow($response->getId(), $options);
+
+                return [
+                    'votes' => $isMovie ? $infos->getNbNotes() : 0,
+                    'year' => $infos->getReleaseDate() != '' ? substr($infos->getReleaseDate(), 0, 4) : '',
+                    'note' => $infos->getNote(),
+                    'overview' => (string) $infos->getOverview(),
+                    'poster' => $infos->getPosterPath() != ''
+                        ? "https://image.tmdb.org/t/p/w300_and_h450_bestv2" . $infos->getPosterPath()
+                        : '',
+                ];
+            }
+        }
+
+        return null;
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\M3uController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VisibleCategoryController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('/playlists', PlaylistController::class);
     Route::resource('/categories', CategoryController::class);
     Route::resource('/filters', FilterController::class);
+    Route::get('/visible-categories', [VisibleCategoryController::class, 'index'])->name('visible-categories.index');
+    Route::post('/visible-categories', [VisibleCategoryController::class, 'store'])->name('visible-categories.store');
     Route::get('/dashboard', [SearchController::class, 'dashboard'])->name('dashboard');
     Route::post('/search', [SearchController::class, 'search'])->name('search');
 	Route::get('/m3u', [M3uController::class, 'm3u'])->name('edit');

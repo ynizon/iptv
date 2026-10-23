@@ -34,6 +34,7 @@ class CategoryController extends Controller
         $validated['from'] = $request->input('from');
         $validated['to'] = $request->input('to');
         Category::create($validated);
+        Category::clearCache();
 
         return redirect()->route('categories.index')
             ->with('success',__('Category created successfully.'));
@@ -67,6 +68,7 @@ class CategoryController extends Controller
         $validated['to'] = $request->input('to');
 
         $category->update($validated);
+        Category::clearCache();
         return redirect()->route('categories.index')
             ->with('success', __('Category updated successfully.'));
 
@@ -78,6 +80,7 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         $category->delete();
+        Category::clearCache();
         return redirect()->route('categories.index')
             ->with('success', __('Category deleted successfully.'));
     }

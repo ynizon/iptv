@@ -13,6 +13,7 @@
                             {{ session('error') }}
                         </div>
                     @endif
+                    @include('partials.warnings')
                 </div>
             </div>
 

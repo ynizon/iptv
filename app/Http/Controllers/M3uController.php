@@ -102,7 +102,8 @@ class M3uController extends Controller
                 $warnings[$view->user->id] = ['user' => $view->user->name,
                     'from' => substr(substr($view->read_at, -8), 0, 5),
                     'counter' => Url::formatHour($view->counter),
-                    'name' => Url::where("url", "=", $view->url)->first()->name];
+                    // The url may have left the playlist since
+                    'name' => Url::where("url", "=", $view->url)->value("name") ?? "?"];
             }
         }
 
@@ -135,7 +136,7 @@ class M3uController extends Controller
         if (file_exists($file) && $content == null) {
             $content = file_get_contents($file);
         }
-        return view("m3u", compact("urls", "content"));
+        return view("m3u", compact("urls", "content", "warnings"));
     }
 
     private function replaceUrlDns($url){

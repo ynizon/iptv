@@ -22,14 +22,9 @@ RUN composer install --no-interaction
 # Install SSL
 RUN npm install @vitejs/plugin-basic-ssl --legacy-peer-deps
 
-# Copy crontab file
-COPY crontab /etc/cron.d/laravel-cron
-
-# Give execution rights on the cron job
-RUN chmod 0644 /etc/cron.d/laravel-cron
-
-# Apply cron job
-RUN crontab /etc/cron.d/laravel-cron
+# Install the cron jobs as root crontab (not in /etc/cron.d, whose format needs a user column)
+COPY crontab /etc/laravel-crontab
+RUN crontab /etc/laravel-crontab
 
 # Prepare /var/www (code, .env, database, migrations) at startup
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
