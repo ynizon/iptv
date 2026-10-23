@@ -26,9 +26,14 @@ return new class extends Migration
         // Remove the default picture cached when a download failed, so it is tried again
         if (extension_loaded('gd')) {
             $manager = new ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
-            $default = md5((string) $manager->read(file_get_contents(public_path('images/default.webp')))
-                ->resize(120, 180)->toJpg());
-            foreach (glob(public_path('images/playlist/*/*.jpg')) as $file) {
+            try {
+                $default = md5((string) $manager->read(file_get_contents(public_path('images/default.webp')))
+                    ->resize(120, 180)->toJpg());
+            } catch (\Throwable $e) {
+                // GD without WebP support: only a clean up, it must not block the startup
+                return;
+            }
+            foreach (glob(public_path('images/playlist/*/*.jpg')) ?: [] as $file) {
                 if (md5_file($file) === $default) {
                     unlink($file);
                 }
