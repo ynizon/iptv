@@ -443,5 +443,8 @@
     "Copy :file to <code>/usr/local/bin</code>": "Copiez :file dans <code>/usr/local/bin</code>",
     "Run:": "Lancez :",
     "If you cannot reach your IPTV server, try another DNS or update your hosts file.": "Si vous n'arrivez pas à joindre votre serveur IPTV, essayez un autre DNS ou modifiez votre fichier hosts.",
-    "Once your account is deleted, all of its resources and data will be permanently deleted.": "Une fois votre compte supprimé, toutes ses données seront définitivement effacées."
+    "Once your account is deleted, all of its resources and data will be permanently deleted.": "Une fois votre compte supprimé, toutes ses données seront définitivement effacées.",
+    "Weighted rating of :score or more": "Note pondérée de :score ou plus",
+    "Weighted rating below :score": "Note pondérée inférieure à :score",
+    "Fewer than :votes votes on TMDB: the TMDB rating is shown, but it is counted closer to the average for sorting": "Moins de :votes votes sur TMDB : la note TMDB est affichée, mais elle est comptée plus près de la moyenne pour le tri"
 }

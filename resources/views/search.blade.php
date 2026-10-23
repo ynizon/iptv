@@ -46,11 +46,11 @@
     </div>
 
     <div class="cat-legend" data-rated-tools>
-        <span><span class="cat-badge tier-a">8,1</span>{{__("Excellent")}}</span>
-        <span><span class="cat-badge tier-b">7,0</span>{{__("Good")}}</span>
-        <span><span class="cat-badge tier-c">5,9</span>{{__("Average")}}</span>
-        <span><span class="cat-badge tier-low">9,0?</span>{{__("Few votes, rating not reliable")}}</span>
-        <span><span class="cat-badge tier-none">—</span>{{__("Not rated yet")}}</span>
+        <span><span class="cat-badge tier-a" title="{{__('Weighted rating of :score or more', ['score' => number_format(\App\Models\Url::SCORE_EXCELLENT, 1, ',', '')])}}">8,1</span>{{__("Excellent")}}</span>
+        <span><span class="cat-badge tier-b" title="{{__('Weighted rating of :score or more', ['score' => number_format(\App\Models\Url::SCORE_GOOD, 1, ',', '')])}}">7,0</span>{{__("Good")}}</span>
+        <span><span class="cat-badge tier-c" title="{{__('Weighted rating below :score', ['score' => number_format(\App\Models\Url::SCORE_GOOD, 1, ',', '')])}}">5,9</span>{{__("Average")}}</span>
+        <span><span class="cat-badge tier-low" title="{{__('Fewer than :votes votes on TMDB: the TMDB rating is shown, but it is counted closer to the average for sorting', ['votes' => \App\Models\Url::LOW_VOTES])}}">9,0?</span>{{__("Few votes, rating not reliable")}}</span>
+        <span><span class="cat-badge tier-none" title="{{__('No TMDB rating for now.')}}">—</span>{{__("Not rated yet")}}</span>
         <span class="cat-legend-note">{{__("The rating takes the number of votes into account. Use the arrow keys to browse.")}}</span>
     </div>
 
@@ -68,7 +68,7 @@
                                 aria-label="{{$parsed['title']}}, {{$rating['label']}} {{$rating['badge']}}">
                             <span class="cat-poster">
                                 <img loading="lazy" src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" alt="">
-                                <span class="cat-badge tier-{{$rating['tier']}}">{{$rating['badge']}}</span>
+                                <span class="cat-badge tier-{{$rating['tier']}}" title="{{$rating['tooltip']}}">{{$rating['badge']}}</span>
                                 @if ($url->isDoubtful())
                                     <span class="cat-doubt" title="{{__("TMDB data to check")}}">!</span>
                                 @endif
@@ -103,7 +103,7 @@
                                 </div>
                             </div>
                             <div class="cat-score">
-                                <span class="cat-badge cat-badge-big tier-{{$rating['tier']}}">{{$rating['badge']}}</span>
+                                <span class="cat-badge cat-badge-big tier-{{$rating['tier']}}" title="{{$rating['tooltip']}}">{{$rating['badge']}}</span>
                                 <div>
                                     <strong>{{$rating['label']}}</strong>
                                     <span>{{$rating['line']}}</span>
@@ -166,7 +166,7 @@
                                 aria-label="{{$parsed['title']}}, {{$rating['label']}} {{$rating['badge']}}">
                             <span class="cat-poster">
                                 <img loading="lazy" src="{{($first->picture != '') ? "/picture/".$first->id : '/images/default.webp'}}" alt="">
-                                <span class="cat-badge tier-{{$rating['tier']}}">{{$rating['badge']}}</span>
+                                <span class="cat-badge tier-{{$rating['tier']}}" title="{{$rating['tooltip']}}">{{$rating['badge']}}</span>
                                 <span class="cat-flags">
                                     <span class="cat-flag-fav" @if (!$first->isFavorite(Auth::id())) hidden @endif>
                                         <svg width="14" height="14" aria-hidden="true"><use href="#ci-heart-fill"/></svg>
@@ -199,7 +199,7 @@
                                 </div>
                             </div>
                             <div class="cat-score">
-                                <span class="cat-badge cat-badge-big tier-{{$rating['tier']}}">{{$rating['badge']}}</span>
+                                <span class="cat-badge cat-badge-big tier-{{$rating['tier']}}" title="{{$rating['tooltip']}}">{{$rating['badge']}}</span>
                                 <div>
                                     <strong>{{$rating['label']}}</strong>
                                     <span>{{$rating['line']}}</span>

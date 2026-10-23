@@ -97,9 +97,19 @@ class Url extends Model
     }
 
     /**
-     * How to show the note: tier (a, b, c, low, none), badge text, label and details
+     * How to show the note, with the explanation shown when hovering the badge
      */
     public function rating(): array
+    {
+        $rating = $this->ratingParts();
+        $rating['tooltip'] = $rating['label'] . ' : ' . $rating['line'];
+        return $rating;
+    }
+
+    /**
+     * Tier (a, b, c, low, none), badge text, label and details of the note
+     */
+    protected function ratingParts(): array
     {
         $format = fn ($note) => number_format($note, 1, ',', '');
         $votes = (int) $this->votes;
