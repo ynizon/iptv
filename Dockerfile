@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Clone Laravel app (kept with its .git, copied to /var/www at startup if the volume is empty)
+# The application lives in the image: to update, pull the new image and recreate the container
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN git clone https://github.com/ynizon/iptv.git /opt/iptv
+RUN rm -rf /var/www && git clone https://github.com/ynizon/iptv.git /var/www
 
-WORKDIR /opt/iptv
+WORKDIR /var/www
 
 # Install dependencies
 RUN composer install --no-interaction
@@ -26,11 +26,12 @@ RUN npm install --legacy-peer-deps && npm run build
 COPY crontab /etc/laravel-crontab
 RUN crontab /etc/laravel-crontab
 
-# Prepare /var/www (code, .env, database, migrations) at startup
+# Link the application to /data (.env, database, pictures, logs) and migrate, at startup
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-WORKDIR /var/www
+# The only folder to share: everything that must be kept
+VOLUME /data
 
 #Expose the port
 EXPOSE 80
@@ -38,4 +39,4 @@ EXPOSE 80
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Start cron + php command (use supervisord for production)
-CMD ["sh", "-c", "cd /var/www && cron && exec php artisan serve --host=0.0.0.0 --port=80"]
+CMD ["sh", "-c", "cron && exec php artisan serve --host=0.0.0.0 --port=80"]

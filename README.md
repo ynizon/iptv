@@ -62,15 +62,36 @@ php artisan refresh:info       # TMDB ratings, summaries and posters (only the t
 ## Docker
 Image: `ynizon/iptv` (built and pushed by the GitHub workflow on every push to `main`).
 
-- Port: map a port of your host to `80`, for example `8051 -> 80`
-- Volume: map a folder of your host to `/var/www`
+The application is in the image; a single folder keeps your data:
+````
+docker run -d --name iptv -p 8051:80 -v /path/on/your/host/iptv-data:/data ynizon/iptv
+````
 
-At startup, the container:
-- copies the application into `/var/www` when the volume is empty, then creates `.env` and the database when they are missing
-- compiles the assets (`npm run build`) and runs the migrations
-- starts cron: `refresh:info` runs every night at 2:00 (container time, UTC)
+`/data` holds:
+- `.env`: your settings (`M3U`, `ADMIN_USER`, `ADMIN_PASSWORD`, `TMDB_KEY`...), created from `.env.example` on the first start
+- `database.sqlite`: playlists, catalog, users, favorites and history (with `database.sqlite-wal` / `-shm` next to it)
+- `images/`: cache of the posters and channel logos
+- `storage/`: logs, sessions
 
-To update a running container: `git pull` in `/var/www`, then restart the container.
+At startup, the container creates what is missing in `/data`, runs the migrations (and the seeder on a new database), then starts cron: `refresh:info` runs every night at 2:00 (container time, UTC).
+
+After the first start, set your variables in `/data/.env` and restart the container.
+
+To update: pull the new image and recreate the container with the same `/data` folder:
+````
+docker pull ynizon/iptv
+docker rm -f iptv
+docker run -d --name iptv -p 8051:80 -v /path/on/your/host/iptv-data:/data ynizon/iptv
+````
+
+### Coming from the former setup (volume on /var/www)
+Copy your data from the former volume into the new folder, before the first start:
+````
+cp /former/volume/.env                          iptv-data/.env
+cp /former/volume/database/database.sqlite*     iptv-data/
+mkdir -p iptv-data/images && cp -r /former/volume/public/images/playlist/. iptv-data/images/
+````
+The container adds `DB_DATABASE=/data/database.sqlite` to `.env` by itself.
 
 ## Screenshots
 
