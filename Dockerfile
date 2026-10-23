@@ -12,7 +12,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # The application lives in the image: to update, pull the new image and recreate the container
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN rm -rf /var/www && git clone https://github.com/ynizon/iptv.git /var/www
+# (from /: the base image works in /var/www/html, which this removes)
+RUN cd / && rm -rf /var/www && git clone https://github.com/ynizon/iptv.git /var/www
 
 WORKDIR /var/www
 
