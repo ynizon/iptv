@@ -22,3 +22,6 @@ yarn-error.log
 /.idea
 /.vscode
 /.zed
+
+# SQLite admin tool, must never be pushed
+phpliteadmin*.php
