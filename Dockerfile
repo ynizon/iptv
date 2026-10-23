@@ -19,8 +19,8 @@ WORKDIR /opt/iptv
 # Install dependencies
 RUN composer install --no-interaction
 
-# Install SSL
-RUN npm install @vitejs/plugin-basic-ssl --legacy-peer-deps
+# Install JS dependencies and compile the assets (no Vite dev server in the container)
+RUN npm install --legacy-peer-deps && npm run build
 
 # Install the cron jobs as root crontab (not in /etc/cron.d, whose format needs a user column)
 COPY crontab /etc/laravel-crontab
@@ -33,9 +33,9 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 WORKDIR /var/www
 
 #Expose the port
-EXPOSE 80 443 5173 8000
+EXPOSE 80
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Start cron + php command (use supervisord for production)
-CMD ["sh", "-c", "cd /var/www && cron && php artisan serve --host=0.0.0.0 --port=80 & npm run dev & wait"]
+CMD ["sh", "-c", "cd /var/www && cron && exec php artisan serve --host=0.0.0.0 --port=80"]

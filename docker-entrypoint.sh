@@ -22,6 +22,11 @@ fi
 [ -d vendor ] || composer install --no-interaction
 [ -d node_modules ] || npm install --legacy-peer-deps
 
+# Compiled assets, no Vite dev server: rebuilt at each start to follow a git pull,
+# and a "hot" file left by "npm run dev" would send the pages to that server
+rm -f public/hot
+npm run build
+
 new_db=0
 if [ ! -f database/database.sqlite ]; then
     echo "[entrypoint] creating database/database.sqlite"
