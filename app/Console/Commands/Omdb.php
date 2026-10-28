@@ -53,6 +53,7 @@ class Omdb extends Command
         }
 
         curl_close($ch);
+        $this->call('refresh:cache');
 
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;

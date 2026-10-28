@@ -52,6 +52,13 @@ return [
             'lock_path' => storage_path('framework/cache/data'),
         ],
 
+        // Urls of each category page, rebuilt after each refresh: in files, not to grow the database
+        'catalog' => [
+            'driver' => 'file',
+            'path' => storage_path('framework/cache/catalog'),
+            'lock_path' => storage_path('framework/cache/catalog'),
+        ],
+
         'memcached' => [
             'driver' => 'memcached',
             'persistent_id' => env('MEMCACHED_PERSISTENT_ID'),

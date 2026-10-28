@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +33,20 @@ class Url extends Model
             WHEN votes > 0 THEN (votes * note + " . self::SCORE_WEIGHT . " * " . self::SCORE_MEAN . ") / (votes + " . self::SCORE_WEIGHT . ")
             ELSE note END";
         DB::update("UPDATE urls SET score = $scoreSql WHERE score <> $scoreSql");
+    }
+
+    /**
+     * Movies, episodes then channels of a query, with one limit per type: with a shared one, the episodes
+     * of the best rated series took every place, and the channels (no rating) were always cut
+     */
+    public static function limitByType(Builder $query): Collection
+    {
+        // Movies and episodes: best rated first
+        $movies = (clone $query)->where("movie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
+        $episodes = (clone $query)->where("serie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
+        $channels = (clone $query)->where("tvchannel", 1)->orderBy("name")->limit(3000)->get();
+
+        return $movies->concat($episodes)->concat($channels);
     }
 
     /**

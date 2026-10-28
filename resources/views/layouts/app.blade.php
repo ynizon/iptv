@@ -91,6 +91,11 @@
             } );
 
             $( ".category" ).on( "click", function(button) {
+                // Settings pages have no list: open the category in the catalog
+                if (!document.getElementById("list")) {
+                    window.location = "/dashboard?category=" + encodeURIComponent(this.getAttribute("data-category"));
+                    return;
+                }
                 $("#category").val(this.getAttribute("data-category"));
                 $(".category").removeClass("category-active");
                 $(this).addClass("category-active");

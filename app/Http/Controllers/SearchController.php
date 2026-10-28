@@ -51,33 +51,34 @@ class SearchController extends Controller
         $formats = $request->input("formats");
         $category = $request->input("category");
         if ($formats == null) {$formats = [];}
-        $urlsTmp = Url::where("name", "like", "%".$query."%")->where("filter","=",0);
 
-        if ($category != '') {
-            //Favorites
-            if ($category == -1) {
-                $urlsTmp->leftJoin('views', 'urls.url', '=', 'views.url')
-                ->where("favorite" , "=", 1)->where("views.user_id","=",Auth::user()->id)
-                ->select("urls.*");
-            } else {
-                //Recent
-                if ($category == -2) {
+        if ($query == '' && $category != -1 && $category != -2) {
+            // A whole category (or every one): cached after each refresh
+            $urlsTmp = Category::pageUrls((string) $category);
+        } else {
+            $urlsTmp = Url::where("name", "like", "%".$query."%")->where("filter","=",0);
+
+            if ($category != '') {
+                //Favorites
+                if ($category == -1) {
                     $urlsTmp->leftJoin('views', 'urls.url', '=', 'views.url')
-                        ->where("views.user_id","=",Auth::user()->id)
-                        ->select("urls.*")
-                        ->orderBy("read_at","desc");
+                    ->where("favorite" , "=", 1)->where("views.user_id","=",Auth::user()->id)
+                    ->select("urls.*");
                 } else {
-                    //Category
-                    $urlsTmp->whereIn("category", Category::groups()[$category] ?? [$category]);
+                    //Recent
+                    if ($category == -2) {
+                        $urlsTmp->leftJoin('views', 'urls.url', '=', 'views.url')
+                            ->where("views.user_id","=",Auth::user()->id)
+                            ->select("urls.*")
+                            ->orderBy("read_at","desc");
+                    } else {
+                        //Category
+                        $urlsTmp->whereIn("category", Category::groups()[$category] ?? [$category]);
+                    }
                 }
             }
+            $urlsTmp = Url::limitByType($urlsTmp);
         }
-        // One limit per type: with a shared one, the episodes of the best rated series took every place,
-        // and the channels (no rating) were always cut. Movies and episodes: best rated first
-        $movies = (clone $urlsTmp)->where("movie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
-        $episodes = (clone $urlsTmp)->where("serie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
-        $channels = $urlsTmp->where("tvchannel", 1)->orderBy("name")->limit(3000)->get();
-        $urlsTmp = $movies->concat($episodes)->concat($channels);
         $urls = [
                 "movies" => [],
                 "series" => [],

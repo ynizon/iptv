@@ -33,7 +33,20 @@
 
             <script>
                 $(document).ready(function() {
-                   $("#recent").click();
+                    // Category clicked from another page
+                    let category = new URLSearchParams(window.location.search).get("category");
+                    let item = category === null ? null : $(".category").filter(function () {
+                        return this.getAttribute("data-category") === category;
+                    });
+                    if (item && item.length) {
+                        $("#category").val(category);
+                        $(".category").removeClass("category-active");
+                        item.addClass("category-active");
+                        history.replaceState(null, "", "/dashboard");
+                        refreshMovies();
+                    } else {
+                        $("#recent").click();
+                    }
                 });
             </script>
             <x-app.footer />

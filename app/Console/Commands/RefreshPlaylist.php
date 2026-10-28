@@ -81,6 +81,7 @@ class RefreshPlaylist extends Command
         $this->filterUrls();
 
         UrlImport::truncate();
+        $this->call('refresh:cache');
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         $this->info("Finished : " . number_format($executionTime, 2) . " sec with ".UrlError::count() . " errors");

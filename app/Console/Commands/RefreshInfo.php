@@ -110,6 +110,7 @@ class RefreshInfo extends Command
         });
 
         Url::computeScores();
+        $this->call('refresh:cache');
 
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
