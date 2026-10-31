@@ -56,12 +56,15 @@ class Url extends Model
     /**
      * Movies, episodes then channels of a query, with one limit per type: with a shared one, the episodes
      * of the best rated series took every place, and the channels (no rating) were always cut
-     * @param bool $newestFirst last added first (the id grows with each new url), instead of best rated first
+     * @param bool $newestFirst last added first instead of best rated first: the urls dated by a refresh,
+     * then the ones of the first import, whose ids only follow the provider list: by release year
      */
     public static function limitByType(Builder $query, bool $newestFirst = false): Collection
     {
+        // The year ending the name ("... FHD 2025"), else the TMDB one
+        $yearSql = "CASE WHEN substr(urls.name, -4) GLOB '[12][0-9][0-9][0-9]' THEN CAST(substr(urls.name, -4) AS INTEGER) ELSE urls.year END";
         $order = fn (Builder $query) => $newestFirst
-            ? $query->orderBy("urls.id", "desc")
+            ? $query->orderByRaw("urls.created_at IS NULL, urls.created_at DESC, $yearSql DESC, urls.id DESC")
             : $query->orderBy("score", "desc")->orderBy("name");
         $movies = $order((clone $query)->where("movie", 1))->limit(1500)->get();
         $episodes = $order((clone $query)->where("serie", 1))->limit(1500)->get();

@@ -9,8 +9,9 @@
 <li><br/></li>
 @foreach ($categories as $category)
     @if ($category != '')
-        <li style="cursor: pointer" class="category"
-            data-category="{{$category}}"><i class="fa fa-list m3u"></i> &nbsp;
-            <span>{{$category}}</span></li>
+        {{-- Long names are cut on one line: the full name on hover --}}
+        <li style="cursor: pointer" class="category" title="{{$category}}"
+            data-category="{{$category}}"><i class="fa fa-list m3u"></i>
+            <span class="category-name">{{$category}}</span></li>
     @endif
 @endforeach
