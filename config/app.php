@@ -15,6 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // The account created by the seeder, which cannot be deleted
+    'admin_user' => env('ADMIN_USER', 'admin@admin.com'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

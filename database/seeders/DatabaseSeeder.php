@@ -83,7 +83,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin',
             'admin' => true,
             'formats' => '["HD","UHD","FHD"]',
-            'email' => env('ADMIN_USER','admin@admin.com'),
+            'email' => config('app.admin_user'),
             'password'=>bcrypt(env('ADMIN_PASSWORD',"admin")),
         ]);
 

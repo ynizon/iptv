@@ -66,8 +66,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/forceWatched/{id}', [SearchController::class, 'forceWatched'])->name('forceWatched');
     Route::get('/watched/{id}', [SearchController::class, 'watched'])->name('watched');
     Route::get('/counter/{id}/{counter}', [SearchController::class, 'counter'])->name('counter');
-    Route::get('/view/{id}', [SearchController::class, 'view'])->name('view');
     Route::get('/picture/{id}', [SearchController::class, 'picture'])->name('picture');
+    Route::get('/detail/{id}', [SearchController::class, 'detail'])->name('detail');
+    Route::get('/detail_serie/{id}', [SearchController::class, 'detailSerie'])->name('detail_serie');
+    Route::get('/export', [SearchController::class, 'export'])->name('export');
 	Route::get('/check/{id}', [SearchController::class, 'check'])->name('check');
     Route::post('/add_tv', [SearchController::class, 'add_tv'])->name('add_tv');
 });

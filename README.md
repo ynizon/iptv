@@ -47,7 +47,7 @@ The Play buttons open the videos in VLC. Settings › Play with VLC explains how
 
 ## Updating the library
 ````
-php artisan refresh:playlist   # import the playlists
+php artisan refresh:playlist   # import the playlists: new titles, moved ones, and removal of the ones gone
 php artisan refresh:info       # TMDB ratings, summaries and posters (only the titles not done yet)
 ````
 `refresh:info` accepts `--limit=N` to process only N titles.
@@ -73,7 +73,7 @@ docker run -d --name iptv -p 8051:80 -v /path/on/your/host/iptv-data:/data ynizo
 - `images/`: cache of the posters and channel logos
 - `storage/`: logs, sessions
 
-At startup, the container creates what is missing in `/data`, runs the migrations (and the seeder on a new database), then starts cron: `refresh:info` runs every night at 2:00 (container time, UTC).
+At startup, the container creates what is missing in `/data`, runs the migrations (and the seeder on a new database), then starts cron: every night at 2:00 (container time, UTC), `refresh:playlist` imports the playlists, then `refresh:info` fetches TMDB data for the new titles.
 
 After the first start, set your variables in `/data/.env` and restart the container.
 

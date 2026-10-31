@@ -10,9 +10,14 @@ use App\Models\UrlImport;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class RefreshPlaylist extends Command
 {
+
+    // Date of the urls found by this refresh, kept by the ones already known: null on the
+    // first import, otherwise the whole catalog would be shown as new
+    protected ?string $addedAt = null;
 
     protected array $tvChannels = [
         " TV ",
@@ -47,6 +52,7 @@ class RefreshPlaylist extends Command
     public function handle(DatabaseManager $manager, Sqlite $sqlite)
     {
 		ini_set('memory_limit', '512M');
+        $this->addedAt = Url::exists() ? date("Y-m-d H:i:s") : null;
         UrlError::truncate();
         $sqlite->setWalJournalMode(
             $db = $sqlite->getDatabase($manager, 'sqlite')
@@ -55,6 +61,8 @@ class RefreshPlaylist extends Command
         $startTime = microtime(true);
 
         $nbPlaylist = 0;
+        // Playlists downloaded and parsed: only their urls can be removed
+        $imported = [];
         foreach (Playlist::all() as $playlist) {
             $nbPlaylist++;
             $this->info('Download Playlist Content #'.$nbPlaylist);
@@ -63,11 +71,15 @@ class RefreshPlaylist extends Command
             if ($playlist->content != '') {
                 $this->info('Parse Playlist Urls #'.$nbPlaylist);
                 $this->parseFileAndCreateUrl($playlist);
+                $imported[] = $playlist;
             }
             $playlist->updated_at = date("Y-m-d H:i:s");
             $playlist->save();
         }
 
+        // Before the comparison with the known urls, which went through it too
+        $this->markTvChannels('url_imports');
+        $this->info('');
         DB::table('url_imports')->orderBy('id')->chunk(100, function ($rows) {
             $data = $rows->map(function ($row) {
 				$record = (array) $row;
@@ -76,6 +88,12 @@ class RefreshPlaylist extends Command
 			})->all();
             DB::table('urls')->insertOrIgnore($data);
         });
+
+        $this->info('Update moved urls');
+        $this->updateMovedUrls();
+        foreach ($imported as $playlist) {
+            $this->removeMissingUrls($playlist);
+        }
 
         $this->info('Filter urls');
         $this->filterUrls();
@@ -201,6 +219,7 @@ class RefreshPlaylist extends Command
                             'category' => $group_title,
                             'picture' => $tvg_logo,
                             'filter' => 0,
+                            'created_at' => $this->addedAt,
                         ];
                     } else {
                         if (stripos($row, "#EXTINF:-1") === false) {
@@ -218,7 +237,7 @@ class RefreshPlaylist extends Command
                         if (!isset($urls[$url['url']])) {
                             $data[] = $url;
                             if ($nb >= 10000) {
-                                UrlImport::insert($data);
+                                $this->insertImports($data);
                                 $data = [];
                                 $nb = 0;
                                 //$this->createUrl($url, $playlist);
@@ -231,9 +250,19 @@ class RefreshPlaylist extends Command
         }
 
         if (count($data) > 0){
-            UrlImport::insert($data);
+            $this->insertImports($data);
         }
         $this->info('');
+    }
+
+    /**
+     * By 1000 rows: SQLite limits the number of values of a query (32766 by default)
+     */
+    protected function insertImports(array $data)
+    {
+        foreach (array_chunk($data, 1000) as $rows) {
+            UrlImport::insert($rows);
+        }
     }
 
     protected function createUrl($urlImport, $playlist)
@@ -254,16 +283,62 @@ class RefreshPlaylist extends Command
         $url->save();
     }
 
+    /**
+     * Urls already known take the category, name and type of the new import: the provider moves
+     * its titles (out of "FILMS RÉCEMMENT AJOUTÉS" for instance). The picture and the TMDB data are kept
+     */
+    protected function updateMovedUrls()
+    {
+        $columns = ['category', 'name', 'short_name', 'serie', 'movie', 'tvchannel', 'season', 'episod', 'playlist_id'];
+        $set = implode(", ", array_map(fn ($column) => "$column = i.$column", $columns));
+        $changed = implode(" OR ", array_map(fn ($column) => "urls.$column IS NOT i.$column", $columns));
+        $nb = DB::update("UPDATE urls SET $set FROM url_imports i WHERE i.url = urls.url AND ($changed)");
+        $this->info($nb . ' urls updated');
+    }
+
+    /**
+     * Remove the urls of a playlist which are not in its new import anymore, with their pictures.
+     * The views stay: favorites and history come back if the url comes back
+     */
+    protected function removeMissingUrls($playlist)
+    {
+        $missing = DB::table('urls')->where('playlist_id', $playlist->id)
+            ->whereNotExists(fn ($query) => $query->select(DB::raw(1))->from('url_imports')->whereColumn('url_imports.url', 'urls.url'))
+            ->pluck('id');
+        $total = DB::table('urls')->where('playlist_id', $playlist->id)->count();
+        // A cut download would empty the catalog: then nothing is removed
+        if ($missing->isEmpty() || $missing->count() > $total / 2) {
+            if ($missing->isNotEmpty()) {
+                $this->error($missing->count() . ' of ' . $total . ' urls missing from playlist #' . $playlist->id . ': not removed, the download may be incomplete');
+            }
+            return;
+        }
+
+        foreach ($missing->chunk(500) as $ids) {
+            DB::table('urls')->whereIn('id', $ids)->delete();
+            foreach ($ids as $id) {
+                File::deleteDirectory(public_path("images/playlist/$id"));
+            }
+        }
+        $this->info($missing->count() . ' urls removed from playlist #' . $playlist->id);
+    }
+
     protected function filterUrls() {
+        $this->markTvChannels('urls');
+        Url::applyFilters();
+        $this->info('');
+    }
+
+    /**
+     * A category or a name like a tv channel makes a channel
+     */
+    protected function markTvChannels(string $table) {
         $bar = $this->output->createProgressBar(count($this->tvChannels));
         foreach ($this->tvChannels as $tvChannel) {
             $bar->advance();
-            Url::where("category", "like", "%" . $tvChannel . "%")
+            DB::table($table)->where("category", "like", "%" . $tvChannel . "%")
                 ->orWhere("name", "like", "%" . $tvChannel . "%")
                 ->update(["tvchannel" => 1 , "movie" =>0, "serie" =>0]);
         }
-
-        Url::applyFilters();
-        $this->info('');
     }
 }

@@ -106,11 +106,42 @@ window.Catalog = (function () {
         const pane = card.closest(".cat-pane");
         pane.querySelectorAll(".cat-card.active").forEach((other) => other.classList.remove("active"));
         card.classList.add("active");
-        pane.querySelectorAll(".cat-detail-item").forEach((detail) => {
-            detail.hidden = detail.dataset.detail !== card.dataset.id;
-        });
-        pane.querySelector(".cat-detail").scrollTop = 0;
         state.selected[pane.dataset.pane] = card.dataset.id;
+        let loaded = false;
+        pane.querySelectorAll(".cat-detail-item").forEach((detail) => {
+            const on = detail.dataset.detail === card.dataset.id;
+            // A failed load is tried again
+            if (on && detail.dataset.failed) {
+                detail.remove();
+                return;
+            }
+            detail.hidden = !on;
+            loaded = loaded || on;
+        });
+        if (!loaded) {
+            load(card.dataset.id, pane);
+        }
+        pane.querySelector(".cat-detail").scrollTop = 0;
+    }
+
+    // The detail panels are loaded when their card is selected: with all of them, a page took megabytes
+    function load(id, pane) {
+        const placeholder = document.createElement("div");
+        placeholder.className = "cat-detail-item cat-detail-loading";
+        placeholder.dataset.detail = id;
+        placeholder.innerHTML = '<span class="loader"></span>';
+        pane.querySelector(".cat-detail").appendChild(placeholder);
+        const url = id.charAt(0) === "s" ? "/detail_serie/" + id.substring(1) : "/detail/" + id;
+        $.get(url).done((html) => {
+            const box = document.createElement("div");
+            box.innerHTML = html;
+            const item = box.querySelector(".cat-detail-item");
+            item.hidden = state.selected[pane.dataset.pane] !== id;
+            placeholder.replaceWith(item);
+        }).fail(() => {
+            placeholder.dataset.failed = "1";
+            placeholder.textContent = labels.loadError || "";
+        });
     }
 
     // Below the grid on small screens: bring the detail into view

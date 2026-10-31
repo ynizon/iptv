@@ -88,7 +88,7 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        if (Auth::user()->isAdmin() && $user->email != env('ADMIN_USER')) {
+        if (Auth::user()->isAdmin() && $user->email != config('app.admin_user')) {
             $user->delete();
             return redirect()->route('users.index')
                 ->with('success', __('User deleted successfully.'));

@@ -1,2 +1,3 @@
-0 2 * * * cd /var/www && /usr/local/bin/php artisan refresh:info >> /var/log/cron.log 2>&1
+# Every night: the playlists first (new, moved and removed titles), then TMDB for the new titles
+0 2 * * * cd /var/www && /usr/local/bin/php artisan refresh:playlist >> /var/log/cron.log 2>&1; /usr/local/bin/php artisan refresh:info >> /var/log/cron.log 2>&1
 

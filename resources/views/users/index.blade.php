@@ -13,7 +13,7 @@
                     <span class="set-item-main">
                         <strong>
                             {{$user->name}}
-                            @if ($user->isAdmin() || $user->email == env("ADMIN_EMAIL"))
+                            @if ($user->isAdmin() || $user->email == config('app.admin_user'))
                                 <span class="set-badge">{{__('Admin')}}</span>
                             @endif
                         </strong>

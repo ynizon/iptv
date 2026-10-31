@@ -21,6 +21,8 @@ class Url extends Model
     public const LOW_VOTES = 50;
     public const SCORE_EXCELLENT = 7.5;
     public const SCORE_GOOD = 6.5;
+    // Shown as new during this number of days after its import
+    public const NEW_DAYS = 7;
 
     protected ?array $parsedName = null;
 
@@ -33,6 +35,22 @@ class Url extends Model
             WHEN votes > 0 THEN (votes * note + " . self::SCORE_WEIGHT . " * " . self::SCORE_MEAN . ") / (votes + " . self::SCORE_WEIGHT . ")
             ELSE note END";
         DB::update("UPDATE urls SET score = $scoreSql WHERE score <> $scoreSql");
+    }
+
+    /**
+     * Urls whose name has words starting with each word of the search ("harr pot" finds "Harry Potter"),
+     * through the full text index: accents and case are ignored
+     */
+    public static function searchName(string $search): Builder
+    {
+        preg_match_all('/[\p{L}\p{N}]+/u', $search, $matches);
+        if (empty($matches[0]) || DB::getDriverName() !== 'sqlite') {
+            return self::where("name", "like", "%" . $search . "%");
+        }
+        $match = implode(" ", array_map(fn ($word) => '"' . $word . '"*', $matches[0]));
+
+        return self::whereIn("urls.id", fn ($query) => $query->select("rowid")->from("urls_fts")
+            ->whereRaw("urls_fts MATCH ?", [$match]));
     }
 
     /**
@@ -104,6 +122,14 @@ class Url extends Model
         $name = trim(preg_replace('/\s+/', ' ', $name));
 
         return ['name' => $name != '' ? $name : $this->name, 'tags' => array_values(array_unique($tags))];
+    }
+
+    /**
+     * Found by one of the last refreshes (the urls of the first import have no date)
+     */
+    public function isNew(): bool
+    {
+        return $this->created_at !== null && $this->created_at->gt(now()->subDays(self::NEW_DAYS));
     }
 
     /**

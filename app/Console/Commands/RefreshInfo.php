@@ -48,14 +48,14 @@ class RefreshInfo extends Command
             $db = $sqlite->getDatabase($manager, 'sqlite')
         );
         $startTime = microtime(true);
-        if (env("TMDB_KEY") == '') {
+        if (config('services.tmdb.key') == '') {
             $this->error('Set your TMDB_KEY api in your .env file.');
             exit();
         }
         DB::update("update urls set picture = '' where picture like '%365.tv%'");//Remove error picture
 
         $this->info('Refresh TMDB');
-        $tmdb = Factory::create()->getTmdb(env('TMDB_KEY'));
+        $tmdb = Factory::create()->getTmdb(config('services.tmdb.key'));
         $search    = new Search($tmdb);
 
         $nb = 0;

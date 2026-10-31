@@ -448,5 +448,8 @@
     "Once your account is deleted, all of its resources and data will be permanently deleted.": "Une fois votre compte supprimé, toutes ses données seront définitivement effacées.",
     "Weighted rating of :score or more": "Note pondérée de :score ou plus",
     "Weighted rating below :score": "Note pondérée inférieure à :score",
-    "Fewer than :votes votes on TMDB: the TMDB rating is shown, but it is counted closer to the average for sorting": "Moins de :votes votes sur TMDB : la note TMDB est affichée, mais elle est comptée plus près de la moyenne pour le tri"
+    "Fewer than :votes votes on TMDB: the TMDB rating is shown, but it is counted closer to the average for sorting": "Moins de :votes votes sur TMDB : la note TMDB est affichée, mais elle est comptée plus près de la moyenne pour le tri",
+    "Export M3U": "Exporter en M3U",
+    "The channels and movies of this list, for Kodi or another player": "Les chaînes et films de cette liste, pour Kodi ou un autre lecteur",
+    "The details could not be loaded. Select the title again to retry.": "Le détail n’a pas pu être chargé. Sélectionnez de nouveau le titre pour réessayer."
 }

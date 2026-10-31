@@ -65,7 +65,7 @@ class Omdb extends Command
     {
         try{
             $infos = explode(" (", $url->name);
-            $urlImdb = "https://www.omdbapi.com/?apikey=".env("OMDB_KEY")."&t=".urlencode($infos[0]);
+            $urlImdb = "https://www.omdbapi.com/?apikey=".config("services.omdb.key")."&t=".urlencode($infos[0]);
 
             curl_setopt($ch, CURLOPT_URL, $urlImdb);
             $content = curl_exec($ch);

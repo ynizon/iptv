@@ -46,17 +46,85 @@ class SearchController extends Controller
         }
     }
 
-    public function search(Request $request) {
-        $query = $request->input("search");
-        $formats = $request->input("formats");
-        $category = $request->input("category");
-        if ($formats == null) {$formats = [];}
 
+    public function search(Request $request) {
+        $formats = $request->input("formats");
+        [$urls, $firstEpisodes] = $this->results((string) $request->input("search"), $request->input("category"), $formats ?: []);
+
+        $date = new DateTime();
+        $date->modify('-2 hours');
+        $time2Hour = $date->format('Y-m-d H:i:s');
+        $views = View::where("user_id", "!=", Auth::user()->id)->where("read_at", ">=", $time2Hour)->orderBy('read_at','desc')->get();
+        $warnings = [];
+        foreach ($views as $view) {
+            if (!isset($warnings[$view->user->id]) && $view->counter>0) {
+                $warnings[$view->user->id] = ['user' => $view->user->name,
+                    'from' => substr(substr($view->read_at, -8), 0, 5),
+                    'counter' => Url::formatHour($view->counter),
+                    // The url may have left the playlist since
+                    'name' => Url::where("url", "=", $view->url)->value("name") ?? "?"];
+            }
+        }
+
+        return view("search", compact("urls", "firstEpisodes", "warnings"));
+    }
+
+    /**
+     * The channels and movies of a search as a M3U file (for Kodi), made only when asked
+     */
+    public function export(Request $request) {
+        [$urls] = $this->results((string) $request->input("search"), $request->input("category"), $this->hiddenFormats());
+
+        $content = "#EXTM3U" . PHP_EOL;
+        foreach (array_merge($urls["channels"], $urls["movies"]) as $url) {
+            $content .= '#EXTINF:-1 tvg-id="'.$url['id'].'" tvg-name="'.$url['name'].'" tvg-logo="'.$url['picture'].'" group-title="'.$url['category'].'",'.$url['name'].PHP_EOL;
+            $content .= $url->urlFinal . PHP_EOL;
+        }
+
+        return response($content)
+            ->header('Content-Type', 'audio/x-mpegurl')
+            ->header('Content-Disposition', 'attachment; filename="iptv.m3u8"');
+    }
+
+    /**
+     * Detail panel of a movie, loaded when its card is selected
+     */
+    public function detail($id) {
+        $url = Url::findOrFail($id);
+        $url->urlFinal = $this->replaceUrlDns($url->url);
+
+        return view("partials.detail-movie", compact("url"));
+    }
+
+    /**
+     * Detail panel of a series with all its episodes, loaded when its card is selected
+     */
+    public function detailSerie(Request $request, $id) {
+        $first = Url::findOrFail($id);
+        $serie = $this->serieName($first->name);
+        $seasons = [];
+        $formats = $this->hiddenFormats();
+        $episodes = Url::where("serie", 1)->where("filter", 0)->where("name", "like", $serie . "%")->get();
+        foreach ($episodes as $url) {
+            if ($this->serieName($url->name) == $serie && !$this->hasFormat($url, $formats)) {
+                $url->urlFinal = $this->replaceUrlDns($url->url);
+                [$season, $episod] = $this->seasonEpisod($url->name);
+                $seasons[$season][$episod] = $url;
+            }
+        }
+
+        return view("partials.detail-serie", compact("first", "serie", "seasons"));
+    }
+
+    /**
+     * Movies, series (name => season => episod => url) and channels of a search, with the first episode of each series
+     */
+    private function results(string $query, $category, array $formats): array {
         if ($query == '' && $category != -1 && $category != -2) {
             // A whole category (or every one): cached after each refresh
             $urlsTmp = Category::pageUrls((string) $category);
         } else {
-            $urlsTmp = Url::where("name", "like", "%".$query."%")->where("filter","=",0);
+            $urlsTmp = ($query != '' ? Url::searchName($query) : Url::query())->where("filter","=",0);
 
             if ($category != '') {
                 //Favorites
@@ -88,31 +156,14 @@ class SearchController extends Controller
         // First episode of each series: its picture, note and description stand for the series
         $firstEpisodes = [];
         foreach ($urlsTmp as $url) {
-            $ok = true;
-            foreach ($formats as $format) {
-                if (stripos($url->name, $format. " ") !== false) {
-                    $ok = false;
-                }
-            }
-            if ($ok) {
+            if (!$this->hasFormat($url, $formats)) {
                 $url->urlFinal = $this->replaceUrlDns($url->url);
                 if ($url->movie) {
                     $urls["movies"][] = $url;
                 }
                 if ($url->serie) {
-                    $name = trim($url->name);
-                    $episod = 0;
-                    $season = 0;
-                    preg_match('/(\d{2}) E(\d{2})/', $name, $matches);
-                    if (!empty($matches)) {
-                        $season = $matches[1];
-                        $episod = $matches[2];
-                    }
-
-                    preg_match('/^(.*?)(?=S\d{2} E\d{2})/', $name, $matches);
-                    if (!empty($matches)) {
-                        $name = trim($matches[1]);
-                    }
+                    $name = $this->serieName($url->name);
+                    [$season, $episod] = $this->seasonEpisod($url->name);
                     if (!isset($urls["series"][$name]))  {
                         $urls["series"][$name] = [];
                         $firstEpisodes[$name] = $url;
@@ -129,38 +180,43 @@ class SearchController extends Controller
             }
         }
 
-        $date = new DateTime();
-        $date->modify('-2 hours');
-        $time2Hour = $date->format('Y-m-d H:i:s');
-        $views = View::where("user_id", "!=", Auth::user()->id)->where("read_at", ">=", $time2Hour)->orderBy('read_at','desc')->get();
-        $warnings = [];
-        foreach ($views as $view) {
-            if (!isset($warnings[$view->user->id]) && $view->counter>0) {
-                $warnings[$view->user->id] = ['user' => $view->user->name,
-                    'from' => substr(substr($view->read_at, -8), 0, 5),
-                    'counter' => Url::formatHour($view->counter),
-                    // The url may have left the playlist since
-                    'name' => Url::where("url", "=", $view->url)->value("name") ?? "?"];
+        return [$urls, $firstEpisodes];
+    }
+
+    /**
+     * The formats the user hides (HD, SD...)
+     */
+    private function hiddenFormats(): array {
+        return array_values(json_decode(Auth::user()->getFormats(), true) ?: []);
+    }
+
+    private function hasFormat(Url $url, array $formats): bool {
+        foreach ($formats as $format) {
+            if (stripos($url->name, $format. " ") !== false) {
+                return true;
             }
         }
 
+        return false;
+    }
 
-        //Create m3u8 file in storage (if you use Kodi)
-        $fp = fopen(storage_path(Auth::user()->id.".m3u8"),"w+");
-        fputs($fp, "#EXTM3U".PHP_EOL);
-        foreach ($urls["channels"] as $channel)
-        {
-            fputs($fp,'#EXTINF:-1 tvg-id="'.$channel['id'].'" tvg-name="'.$channel['name'].'" tvg-logo="'.$channel['picture'].'" group-title="'.$channel['category'].'",'.$channel['name']. PHP_EOL);
-            fputs($fp,$channel['url'] . PHP_EOL);
-        }
-        foreach ($urls["movies"] as $movie)
-        {
-            fputs($fp,'#EXTINF:-1 tvg-id="'.$movie['id'].'" tvg-name="'.$movie['name'].'" tvg-logo="'.$movie['picture'].'" group-title="'.$movie['category'].'",'.$movie['name'].PHP_EOL);
-            fputs($fp,$movie['url'] . PHP_EOL);
-        }
-        fclose($fp);
+    /**
+     * "Lupin (MULTI) FHD S01 E02" -> "Lupin (MULTI) FHD"
+     */
+    private function serieName(string $name): string {
+        $name = trim($name);
+        preg_match('/^(.*?)(?=S\d{2} E\d{2})/', $name, $matches);
 
-        return view("search", compact("urls", "firstEpisodes", "warnings"));
+        return !empty($matches) ? trim($matches[1]) : $name;
+    }
+
+    /**
+     * "Lupin (MULTI) FHD S01 E02" -> ["01", "02"]
+     */
+    private function seasonEpisod(string $name): array {
+        preg_match('/(\d{2}) E(\d{2})/', trim($name), $matches);
+
+        return !empty($matches) ? [$matches[1], $matches[2]] : [0, 0];
     }
 
     private function replaceUrlDns($url){
@@ -169,13 +225,6 @@ class SearchController extends Controller
         }
 
         return $url;
-    }
-
-    public function view(Request $request, $id) {
-        $url = Url::findOrFail($id);
-
-        shell_exec("c:\\videolan\\vlc\\vlc.exe $url->url");
-        return view("view");
     }
 
     public function favorite_serie(Request $request) {
