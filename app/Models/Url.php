@@ -38,12 +38,15 @@ class Url extends Model
     /**
      * Movies, episodes then channels of a query, with one limit per type: with a shared one, the episodes
      * of the best rated series took every place, and the channels (no rating) were always cut
+     * @param bool $newestFirst last added first (the id grows with each new url), instead of best rated first
      */
-    public static function limitByType(Builder $query): Collection
+    public static function limitByType(Builder $query, bool $newestFirst = false): Collection
     {
-        // Movies and episodes: best rated first
-        $movies = (clone $query)->where("movie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
-        $episodes = (clone $query)->where("serie", 1)->orderBy("score", "desc")->orderBy("name")->limit(1500)->get();
+        $order = fn (Builder $query) => $newestFirst
+            ? $query->orderBy("urls.id", "desc")
+            : $query->orderBy("score", "desc")->orderBy("name");
+        $movies = $order((clone $query)->where("movie", 1))->limit(1500)->get();
+        $episodes = $order((clone $query)->where("serie", 1))->limit(1500)->get();
         $channels = (clone $query)->where("tvchannel", 1)->orderBy("name")->limit(3000)->get();
 
         return $movies->concat($episodes)->concat($channels);

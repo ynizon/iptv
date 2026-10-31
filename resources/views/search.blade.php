@@ -12,7 +12,7 @@
         <symbol id="ci-close" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></g></symbol>
     </defs>
 </svg>
-<div class="catalog" id="catalog" data-recent="{{ request('category') == -2 ? 1 : 0 }}" data-labels="{{ json_encode(['one' => __(':count title'), 'many' => __(':count titles'), 'bestFirst' => __(', best rated first'), 'empty' => __('No title matches. Try without « Good ratings only ».')]) }}">
+<div class="catalog" id="catalog" data-recent="{{ request('category') == -2 ? 1 : 0 }}" data-added="{{ \App\Models\Category::isRecentlyAdded(request('category')) ? 1 : 0 }}" data-labels="{{ json_encode(['one' => __(':count title'), 'many' => __(':count titles'), 'bestFirst' => __(', best rated first'), 'addedFirst' => __(', last added first'),'empty' => __('No title matches. Try without « Good ratings only ».')]) }}">
     <div class="cat-tabs" role="tablist" aria-label="{{__("Content type")}}">
         @if (count($urls["movies"]) > 0)
             <button type="button" class="cat-tab" role="tab" data-tab="movies">{{__("Movies")}} <span>{{count($urls["movies"])}}</span></button>
@@ -33,6 +33,9 @@
         <span class="cat-tools-label">{{__("Sort")}}</span>
         @if (request('category') == -2)
             <button type="button" class="cat-chip" data-sort="recent">{{__("Last watched")}}</button>
+        @endif
+        @if (\App\Models\Category::isRecentlyAdded(request('category')))
+            <button type="button" class="cat-chip" data-sort="added">{{__("Recently added")}}</button>
         @endif
         <button type="button" class="cat-chip" data-sort="score">{{__("Best rated")}}</button>
         <button type="button" class="cat-chip" data-sort="year">{{__("Most recent")}}</button>

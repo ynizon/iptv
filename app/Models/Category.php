@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Category extends Model
 {
@@ -77,7 +78,15 @@ class Category extends Model
             $query->whereIn("category", self::groups()[$category] ?? [$category]);
         }
 
-        return Url::limitByType($query);
+        return Url::limitByType($query, self::isRecentlyAdded($category));
+    }
+
+    /**
+     * "FILMS RÉCEMMENT AJOUTÉS", "RECEMMENT AJOUTÉES": shown last added first
+     */
+    public static function isRecentlyAdded(?string $category): bool
+    {
+        return str_contains(Str::upper(Str::ascii((string) $category)), "RECEMMENT AJOUT");
     }
 
     protected static function computeGroups(): array

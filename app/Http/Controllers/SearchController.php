@@ -77,7 +77,7 @@ class SearchController extends Controller
                     }
                 }
             }
-            $urlsTmp = Url::limitByType($urlsTmp);
+            $urlsTmp = Url::limitByType($urlsTmp, Category::isRecentlyAdded($category));
         }
         $urls = [
                 "movies" => [],

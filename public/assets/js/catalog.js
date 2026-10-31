@@ -9,9 +9,12 @@ window.Catalog = (function () {
         root = element;
         labels = JSON.parse(root.dataset.labels || "{}");
         // The "recent" list comes sorted by last watched: keep that order, by default and as a choice
+        // Same for the "recently added" categories, sorted last added first
         if (root.dataset.recent === "1") {
             state.sort = "recent";
-        } else if (state.sort === "recent") {
+        } else if (root.dataset.added === "1") {
+            state.sort = "added";
+        } else if (state.sort === "recent" || state.sort === "added") {
             state.sort = "score";
         }
         const tabs = Array.from(root.querySelectorAll(".cat-tab"));
@@ -70,8 +73,10 @@ window.Catalog = (function () {
         const cards = Array.from(grid.querySelectorAll(".cat-card"));
         const num = (card, key) => parseFloat(card.dataset[key]) || 0;
         const byScore = (a, b) => num(b, "score") - num(a, "score");
+        const byOrder = (a, b) => num(a, "order") - num(b, "order");
         const sorts = {
-            recent: (a, b) => num(a, "order") - num(b, "order"),
+            recent: byOrder,
+            added: byOrder,
             score: byScore,
             year: (a, b) => num(b, "year") - num(a, "year") || byScore(a, b),
             az: (a, b) => a.dataset.title.localeCompare(b.dataset.title, "fr"),
@@ -85,6 +90,8 @@ window.Catalog = (function () {
         let text = (visible.length > 1 ? labels.many : labels.one || "").replace(":count", visible.length);
         if (state.sort === "score" && visible.length > 1) {
             text += labels.bestFirst || "";
+        } else if (state.sort === "added" && visible.length > 1) {
+            text += labels.addedFirst || "";
         }
         pane.querySelector(".cat-count").textContent = visible.length ? text : labels.empty || "";
         pane.querySelector(".cat-detail").hidden = !visible.length;

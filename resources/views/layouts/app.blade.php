@@ -299,7 +299,7 @@
     <link href="/assets/css/styles.css" rel="stylesheet" />
     <link href="/assets/css/theme.css" rel="stylesheet" />
     <link href="/assets/css/catalog.css" rel="stylesheet" />
-    <script src="/assets/js/catalog.js"></script>
+    <script src="/assets/js/catalog.js?v={{ filemtime(public_path("assets/js/catalog.js")) }}"></script>
 </head>
 
 <body class="g-sidenav-show theme-dark">
