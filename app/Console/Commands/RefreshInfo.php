@@ -28,7 +28,7 @@ class RefreshInfo extends Command
      *
      * @var string
      */
-    protected $signature = 'refresh:info {--limit=0 : Number of urls to process, 0 for all}';
+    protected $signature = 'refresh:info {--limit=0 : Number of urls to process, 0 for all} {--doubtful : Search again the movies whose TMDB year is far from the year of their name}';
 
     /**
      * The console command description.
@@ -59,11 +59,16 @@ class RefreshInfo extends Command
         $search    = new Search($tmdb);
 
         $nb = 0;
-        $query = Url::where("tvchannel", "!=", "1")->where("filter", 0)
-            ->where(function ($query) {
+        $query = Url::where("tvchannel", "!=", "1")->where("filter", 0);
+        if ($this->option("doubtful")) {
+            // Probably matched with another title (shown with a "TMDB data to check" warning)
+            $query->where("year", ">", 0)->whereRaw("ABS((" . Url::NAME_YEAR_SQL . ") - year) > 1");
+        } else {
+            $query->where(function ($query) {
                 // Series rated before their number of votes was stored
                 $query->whereNull("imdb")->orWhere(fn ($q) => $q->where("serie", 1)->where("votes", "<=", 0)->where("note", ">", 0));
             });
+        }
         $limit = (int) $this->option('limit');
         $bar = $this->output->createProgressBar($limit > 0 ? min($limit, $query->count()) : $query->count());
 
@@ -80,10 +85,11 @@ class RefreshInfo extends Command
 
                 $isMovie = $url->movie == 1;
                 $name = $this->searchName($url->name);
-                $key = ($isMovie ? "movie:" : "tv:") . mb_strtolower($name);
+                $year = $url->parsedName()["year"];
+                $key = ($isMovie ? "movie:" : "tv:") . mb_strtolower($name) . ":" . $year;
                 if (!array_key_exists($key, $found)) {
                     try {
-                        $found[$key] = $this->findInfos($search, $tmdb, $isMovie, $name, $options);
+                        $found[$key] = $this->findInfos($search, $tmdb, $isMovie, $name, $options, $year);
                     } catch (\Exception $e) {
                         // Left as is, so it is tried again next time
                         $this->error(" " . $url->id . " " . $name . " : " . $e->getMessage());
@@ -137,35 +143,74 @@ class RefreshInfo extends Command
     }
 
     /**
-     * Search TMDB with the full title, then with each side of "Original title : French title"
+     * Search TMDB with the full title, then with each side of "Original title : French title".
+     * With the year of the name, the result released that year (or one year apart) is preferred:
+     * the first result is often a namesake ("L'Avare" 1980 found as the 2022 one)
      * @return array|null votes, year, note, overview, poster
      */
-    protected function findInfos(Search $search, $tmdb, bool $isMovie, string $name, array $options): ?array
+    protected function findInfos(Search $search, $tmdb, bool $isMovie, string $name, array $options, ?int $year = null): ?array
     {
         $names = array_unique(array_merge([$name], array_map('trim', explode(" : ", $name))));
+        $first = null;
         foreach ($names as $searchName) {
             if ($searchName == '') {
                 continue;
             }
-            $responses = $isMovie ? $search->movie($searchName, $options) : $search->tvshow($searchName, $options);
-            foreach ($responses as $response) {
-                $item = new Item($tmdb);
-                $infos = $isMovie
-                    ? $item->getMovie($response->getId(), $options)
-                    : $item->getTVShow($response->getId(), $options);
+            $responses = iterator_to_array($this->searchShow($search, $isMovie, $searchName, $options), false);
+            $first = $first ?? ($responses[0] ?? null);
+            if ($year === null && $first !== null) {
+                break;
+            }
+            $match = $this->sameYear($responses, $year);
+            // Not in the most popular results: among the ones of that year
+            if ($match === null && $year !== null) {
+                $match = $this->sameYear(iterator_to_array($this->searchShow($search, $isMovie, $searchName, $options + ['year' => $year]), false), $year);
+            }
+            if ($match !== null) {
+                return $this->infos($tmdb, $isMovie, $match->getId(), $options);
+            }
+        }
 
-                return [
-                    'votes' => $infos->getNbNotes(),
-                    'year' => $infos->getReleaseDate() != '' ? substr($infos->getReleaseDate(), 0, 4) : '',
-                    'note' => $infos->getNote(),
-                    'overview' => (string) $infos->getOverview(),
-                    'poster' => $infos->getPosterPath() != ''
-                        ? "https://image.tmdb.org/t/p/w300_and_h450_bestv2" . $infos->getPosterPath()
-                        : '',
-                ];
+        // Nothing of that year: the most popular result (the page warns when the years differ)
+        return $first !== null ? $this->infos($tmdb, $isMovie, $first->getId(), $options) : null;
+    }
+
+    protected function searchShow(Search $search, bool $isMovie, string $name, array $options): \Generator
+    {
+        return $isMovie ? $search->movie($name, $options) : $search->tvshow($name, $options);
+    }
+
+    /**
+     * The first result released the given year, or one year apart (release dates differ between countries)
+     */
+    protected function sameYear(array $responses, ?int $year)
+    {
+        foreach ($responses as $response) {
+            $released = (int) substr((string) $response->getReleaseDate(), 0, 4);
+            if ($year !== null && $released > 0 && abs($released - $year) <= 1) {
+                return $response;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @return array votes, year, note, overview, poster
+     */
+    protected function infos($tmdb, bool $isMovie, int $id, array $options): array
+    {
+        $item = new Item($tmdb);
+        $infos = $isMovie ? $item->getMovie($id, $options) : $item->getTVShow($id, $options);
+
+        return [
+            'votes' => $infos->getNbNotes(),
+            'year' => $infos->getReleaseDate() != '' ? substr($infos->getReleaseDate(), 0, 4) : '',
+            'note' => $infos->getNote(),
+            'overview' => (string) $infos->getOverview(),
+            'poster' => $infos->getPosterPath() != ''
+                ? "https://image.tmdb.org/t/p/w300_and_h450_bestv2" . $infos->getPosterPath()
+                : '',
+        ];
     }
 }

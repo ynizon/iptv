@@ -14,7 +14,10 @@ class Categories extends Component
      */
     public function render(): View|Closure|string
     {
-        $categories = array_keys(Category::groups());
+        // The "recently added" categories first, then the alphabetical order
+        $categories = collect(array_keys(Category::groups()))
+            ->sortBy(fn ($category) => Category::isRecentlyAdded($category) ? 0 : 1)
+            ->values()->all();
         return view('components.categories', compact('categories'));
     }
 }

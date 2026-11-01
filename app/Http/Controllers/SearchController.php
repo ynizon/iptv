@@ -50,6 +50,7 @@ class SearchController extends Controller
     public function search(Request $request) {
         $formats = $request->input("formats");
         [$urls, $firstEpisodes] = $this->results((string) $request->input("search"), $request->input("category"), $formats ?: []);
+        $seriesTotals = $this->seriesTotals(array_keys($urls["series"]));
 
         $date = new DateTime();
         $date->modify('-2 hours');
@@ -66,7 +67,7 @@ class SearchController extends Controller
             }
         }
 
-        return view("search", compact("urls", "firstEpisodes", "warnings"));
+        return view("search", compact("urls", "firstEpisodes", "seriesTotals", "warnings"));
     }
 
     /**
@@ -181,6 +182,24 @@ class SearchController extends Controller
         }
 
         return [$urls, $firstEpisodes];
+    }
+
+    /**
+     * Seasons and episodes of each series in the whole catalog: a page holds only some of them
+     * @return array name => ["seasons" => n, "episodes" => n]
+     */
+    private function seriesTotals(array $names): array {
+        $totals = [];
+        foreach (array_chunk($names, 500) as $chunk) {
+            // The conditions in the counts: with them in the WHERE, SQLite takes the "filter" index (40 times slower)
+            $rows = DB::table("urls")->whereIn("short_name", $chunk)->groupBy("short_name")
+                ->selectRaw("short_name, COUNT(DISTINCT CASE WHEN serie = 1 AND filter = 0 THEN season END) AS seasons, SUM(serie = 1 AND filter = 0) AS episodes")->get();
+            foreach ($rows as $row) {
+                $totals[$row->short_name] = ["seasons" => (int) $row->seasons, "episodes" => (int) $row->episodes];
+            }
+        }
+
+        return $totals;
     }
 
     /**
@@ -495,49 +514,4 @@ class SearchController extends Controller
 
         return $content;
     }
-	
-	public function check($id){		
-		$url = Url::findOrFail($id);
-		if ($url->url != '') {
-			$ch = curl_init();
-					$headers = [
-				'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-				'Accept: */*',
-				'Accept-Language: fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-				'Range: bytes=0-1024', // On demande juste le premier Ko du film
-				'Connection: keep-alive',
-			];
-			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-			
-			// 2. On accepte tout type de contenu
-			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-				'Range: bytes=0-1', // On ne demande que le tout premier octet du film
-				'Connection: close'
-			));
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Suit les redirections
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  // Récupère la réponse sans l'afficher
-			curl_setopt($ch, CURLOPT_HEADER, false);           // Inclut les en-têtes dans la sortie
-			curl_setopt($ch, CURLOPT_NOBODY, true);           // N'inclut que les en-têtes dans la réponse
-
-			curl_setopt($ch, CURLOPT_URL, $url->url);
-			$returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			
-			$result = curl_exec($ch);
-
-			if ($result === false) {
-				// Affiche l'erreur précise (ex: "Could not resolve host" ou "Connection refused")
-				echo 'Erreur cURL : ' . curl_error($ch);
-			} else {
-				$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-				echo "Code HTTP : " . $httpCode;
-			}
-
-			curl_close($ch);
-
-			echo $returnCode;
-		}
-	}
 }

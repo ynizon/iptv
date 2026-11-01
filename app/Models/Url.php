@@ -21,6 +21,8 @@ class Url extends Model
     public const LOW_VOTES = 50;
     public const SCORE_EXCELLENT = 7.5;
     public const SCORE_GOOD = 6.5;
+    // The year ending the name ("... FHD 2025"), null without one
+    public const NAME_YEAR_SQL = "CASE WHEN substr(urls.name, -4) GLOB '[12][0-9][0-9][0-9]' THEN CAST(substr(urls.name, -4) AS INTEGER) END";
     // Shown as new during this number of days after its import
     public const NEW_DAYS = 7;
 
@@ -35,6 +37,21 @@ class Url extends Model
             WHEN votes > 0 THEN (votes * note + " . self::SCORE_WEIGHT . " * " . self::SCORE_MEAN . ") / (votes + " . self::SCORE_WEIGHT . ")
             ELSE note END";
         DB::update("UPDATE urls SET score = $scoreSql WHERE score <> $scoreSql");
+    }
+
+    /**
+     * Type and stream id of a provider url, which stay when its token or server change:
+     * "http://host:80/movie/user/token/198273.mkv" -> "movie:198273", "http://host/user/token/1234" -> "live:1234"
+     */
+    public static function streamKey(string $url): ?string
+    {
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        if (!preg_match('#/(\d+)(?:\.[a-z0-9]+)?$#i', $path, $matches)) {
+            return null;
+        }
+        $type = preg_match('#^/(movie|series|live)/#i', $path, $types) ? strtolower($types[1]) : 'live';
+
+        return $type . ':' . $matches[1];
     }
 
     /**
@@ -56,16 +73,17 @@ class Url extends Model
     /**
      * Movies, episodes then channels of a query, with one limit per type: with a shared one, the episodes
      * of the best rated series took every place, and the channels (no rating) were always cut
-     * @param bool $newestFirst last added first instead of best rated first: the urls dated by a refresh,
-     * then the ones of the first import, whose ids only follow the provider list: by release year
+     * Movies and episodes: most recent first (release year), then best rated
+     * @param bool $lastAddedFirst last added first: the urls dated by a refresh, then the ones
+     * of the first import, whose ids only follow the provider list: by release year
      */
-    public static function limitByType(Builder $query, bool $newestFirst = false): Collection
+    public static function limitByType(Builder $query, bool $lastAddedFirst = false): Collection
     {
-        // The year ending the name ("... FHD 2025"), else the TMDB one
-        $yearSql = "CASE WHEN substr(urls.name, -4) GLOB '[12][0-9][0-9][0-9]' THEN CAST(substr(urls.name, -4) AS INTEGER) ELSE urls.year END";
-        $order = fn (Builder $query) => $newestFirst
+        // The year of the name, else the TMDB one
+        $yearSql = "COALESCE(" . self::NAME_YEAR_SQL . ", urls.year)";
+        $order = fn (Builder $query) => $lastAddedFirst
             ? $query->orderByRaw("urls.created_at IS NULL, urls.created_at DESC, $yearSql DESC, urls.id DESC")
-            : $query->orderBy("score", "desc")->orderBy("name");
+            : $query->orderByRaw("$yearSql DESC")->orderBy("score", "desc")->orderBy("name");
         $movies = $order((clone $query)->where("movie", 1))->limit(1500)->get();
         $episodes = $order((clone $query)->where("serie", 1))->limit(1500)->get();
         $channels = (clone $query)->where("tvchannel", 1)->orderBy("name")->limit(3000)->get();

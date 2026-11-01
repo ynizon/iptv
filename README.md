@@ -50,7 +50,13 @@ The Play buttons open the videos in VLC. Settings › Play with VLC explains how
 php artisan refresh:playlist   # import the playlists: new titles, moved ones, and removal of the ones gone
 php artisan refresh:info       # TMDB ratings, summaries and posters (only the titles not done yet)
 ````
-`refresh:info` accepts `--limit=N` to process only N titles.
+`refresh:info` accepts `--limit=N` to process only N titles, and `--doubtful` to search again the titles whose TMDB year is far from the year of their name (shown with a « TMDB data to check » warning): the result released that year is now preferred.
+
+## Tests
+````
+php artisan test
+````
+The tests run on an in-memory database (forced in `phpunit.xml`, checked in `tests/TestCase.php`): never on `database.sqlite`.
 
 ## Settings
 - **Playlists**: the M3U links, and the IP to use when your DNS blocks the provider

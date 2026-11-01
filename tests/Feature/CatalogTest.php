@@ -1,0 +1,146 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Category;
+use App\Models\Url;
+use App\Models\User;
+use App\View\Components\Categories;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class CatalogTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected int $playlist;
+    protected int $stream = 0;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->playlist = DB::table('playlists')->insertGetId(['name' => 'Test', 'url' => 'http://provider/get.php']);
+    }
+
+    protected function url(string $name, string $category, array $attributes = []): Url
+    {
+        $this->stream++;
+        $serie = preg_match('/S(\d{2}) E(\d{2})/', $name, $matches) ? 1 : 0;
+        $id = DB::table('urls')->insertGetId(array_merge([
+            'url' => "http://provider/movie/user/token/{$this->stream}.mkv",
+            'name' => $name,
+            'short_name' => $serie ? trim(preg_replace('/S\d{2} E\d{2}/', '', $name)) : $name,
+            'picture' => '',
+            'category' => $category,
+            'movie' => $serie ? 0 : 1,
+            'serie' => $serie,
+            'season' => $serie ? (int) $matches[1] : 0,
+            'episod' => $serie ? (int) $matches[2] : 0,
+            'playlist_id' => $this->playlist,
+        ], $attributes));
+        Category::clearCache();
+
+        return Url::find($id);
+    }
+
+    protected function user(): User
+    {
+        // Every format kept: none hidden
+        return User::factory()->create(['formats' => json_encode(\App\Http\Controllers\SearchController::FILTERS)]);
+    }
+
+    public function test_the_recently_added_categories_come_first_in_the_menu(): void
+    {
+        $this->url('Alpha (FR) FHD 2024', 'ACTION');
+        $this->url('Beta (FR) FHD 2024', 'FILMS RÉCEMMENT AJOUTÉS');
+        $this->url('Charlie (FR) FHD 2024', 'AVENTURE');
+
+        $html = (new Categories())->render()->render();
+        preg_match_all('/class="category-name">([^<]*)</', $html, $matches);
+
+        $this->assertSame(['FILMS RÉCEMMENT AJOUTÉS', 'ACTION', 'AVENTURE'], $matches[1]);
+    }
+
+    public function test_a_category_shows_the_most_recent_movies_first(): void
+    {
+        $this->url('Old (FR) FHD 1995', 'ACTION', ['score' => 9]);
+        $this->url('New (FR) FHD 2024', 'ACTION', ['score' => 5]);
+        $this->url('Middle (FR) FHD 2010', 'ACTION');
+
+        $this->assertSame(['New (FR) FHD 2024', 'Middle (FR) FHD 2010', 'Old (FR) FHD 1995'],
+            Category::pageUrls('ACTION')->pluck('name')->all());
+    }
+
+    public function test_a_recently_added_category_shows_the_last_added_first(): void
+    {
+        // The first import (no date) by release year, after the titles dated by a refresh
+        $this->url('First import (FR) FHD 2024', 'FILMS RÉCEMMENT AJOUTÉS');
+        $this->url('Old classic (FR) FHD 1979', 'FILMS RÉCEMMENT AJOUTÉS');
+        $this->url('Added yesterday (FR) FHD 2020', 'FILMS RÉCEMMENT AJOUTÉS', ['created_at' => now()->subDay()]);
+        $this->url('Added today (FR) FHD 2015', 'FILMS RÉCEMMENT AJOUTÉS', ['created_at' => now()]);
+
+        $this->assertSame(['Added today (FR) FHD 2015', 'Added yesterday (FR) FHD 2020', 'First import (FR) FHD 2024', 'Old classic (FR) FHD 1979'],
+            Category::pageUrls('FILMS RÉCEMMENT AJOUTÉS')->pluck('name')->all());
+    }
+
+    public function test_the_search_ignores_accents_and_matches_the_start_of_words(): void
+    {
+        $this->url('Amélie Poulain (FR) FHD 2001', 'COMEDIE');
+        $this->url('Harry Potter (MULTI) FHD 2001', 'AVENTURE');
+
+        $this->assertSame(['Amélie Poulain (FR) FHD 2001'], Url::searchName('amelie')->pluck('name')->all());
+        $this->assertSame(['Harry Potter (MULTI) FHD 2001'], Url::searchName('harr pot')->pluck('name')->all());
+        $this->assertSame(0, Url::searchName('otter')->count());
+    }
+
+    public function test_the_category_page_cache_is_cleared_with_the_categories(): void
+    {
+        $this->url('Alpha (FR) FHD 2024', 'ACTION');
+        $this->assertCount(1, Category::pageUrls('ACTION'));
+
+        DB::table('urls')->insert(['url' => 'http://provider/movie/user/token/99.mkv', 'name' => 'Beta (FR) FHD 2024', 'picture' => '',
+            'category' => 'ACTION', 'movie' => 1, 'playlist_id' => $this->playlist]);
+        // Still the cached page
+        $this->assertCount(1, Category::pageUrls('ACTION'));
+
+        Category::clearCache();
+        $this->assertCount(2, Category::pageUrls('ACTION'));
+    }
+
+    public function test_the_catalog_page_loads_the_details_on_demand(): void
+    {
+        $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION', ['created_at' => now()]);
+
+        $page = $this->actingAs($this->user())->post('/search', ['search' => '', 'category' => 'ACTION']);
+        $page->assertOk()->assertSee('Alpha')->assertSee('cat-new', false)->assertDontSee('data-detail="' . $movie->id . '"', false);
+
+        $this->get('/detail/' . $movie->id)->assertOk()->assertSee('data-detail="' . $movie->id . '"', false);
+    }
+
+    public function test_a_series_card_counts_all_its_episodes(): void
+    {
+        // The provider spreads the series over two categories
+        $first = $this->url('Lupin (MULTI) FHD S01 E01', 'SERIES');
+        $this->url('Lupin (MULTI) FHD S01 E02', 'SERIES');
+        $this->url('Lupin (MULTI) FHD S02 E01', 'RECEMMENT AJOUTÉES');
+        $user = $this->user();
+
+        $this->actingAs($user)->post('/search', ['search' => '', 'category' => 'SERIES'])
+            ->assertOk()->assertSee('2 saisons')->assertSee('3 ép.');
+
+        $this->get('/detail_serie/' . $first->id)->assertOk()->assertSee('data-detail="s' . $first->id . '"', false)
+            ->assertSee('Saison 02');
+    }
+
+    public function test_the_export_gives_a_m3u_file(): void
+    {
+        $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION');
+
+        $response = $this->actingAs($this->user())->get('/export?category=ACTION');
+
+        $response->assertOk()->assertHeader('Content-Disposition', 'attachment; filename="iptv.m3u8"');
+        $this->assertStringStartsWith('#EXTM3U', $response->getContent());
+        $this->assertStringContainsString($movie->url, $response->getContent());
+    }
+}

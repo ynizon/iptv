@@ -369,6 +369,7 @@
     ":count title": ":count titre",
     ":count titles": ":count titres",
     ", best rated first": ", les mieux notés en premier",
+    ", most recent first": ", les plus récents en premier",
     ", last added first": ", les derniers ajoutés en premier",
     "No title matches. Try without « Good ratings only ».": "Aucun titre ne correspond. Essayez sans « Bonnes notes uniquement ».",
     "No rating yet": "Pas encore de note",

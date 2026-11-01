@@ -1,7 +1,7 @@
 // Search results: tabs, sort and filters, detail panel and navigation with the ← → keys
 window.Catalog = (function () {
     // Kept between two searches
-    const state = { tab: null, sort: "score", good: false, low: false, selected: {} };
+    const state = { tab: null, sort: "year", good: false, low: false, selected: {} };
     let root = null;
     let labels = {};
 
@@ -15,7 +15,7 @@ window.Catalog = (function () {
         } else if (root.dataset.added === "1") {
             state.sort = "added";
         } else if (state.sort === "recent" || state.sort === "added") {
-            state.sort = "score";
+            state.sort = "year";
         }
         const tabs = Array.from(root.querySelectorAll(".cat-tab"));
         if (!tabs.some((tab) => tab.dataset.tab === state.tab)) {
@@ -90,6 +90,8 @@ window.Catalog = (function () {
         let text = (visible.length > 1 ? labels.many : labels.one || "").replace(":count", visible.length);
         if (state.sort === "score" && visible.length > 1) {
             text += labels.bestFirst || "";
+        } else if (state.sort === "year" && visible.length > 1) {
+            text += labels.newestFirst || "";
         } else if (state.sort === "added" && visible.length > 1) {
             text += labels.addedFirst || "";
         }

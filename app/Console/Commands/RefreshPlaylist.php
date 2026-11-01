@@ -80,6 +80,8 @@ class RefreshPlaylist extends Command
         // Before the comparison with the known urls, which went through it too
         $this->markTvChannels('url_imports');
         $this->info('');
+        $this->info('Follow changed urls');
+        $this->followChangedUrls($imported);
         DB::table('url_imports')->orderBy('id')->chunk(100, function ($rows) {
             $data = $rows->map(function ($row) {
 				$record = (array) $row;
@@ -230,7 +232,8 @@ class RefreshPlaylist extends Command
                         }
                     }
                 } else {
-                    if (isset($url['name']))
+                    // The url line of the title: not an empty or a "#..." line
+                    if (isset($url['name']) && trim($row) != '' && !str_starts_with(trim($row), '#'))
                     {
                         $url['url'] = trim($row);
 
@@ -240,10 +243,11 @@ class RefreshPlaylist extends Command
                                 $this->insertImports($data);
                                 $data = [];
                                 $nb = 0;
-                                //$this->createUrl($url, $playlist);
                             }
                             $urls[$url['url']] = 1;
                         }
+                        // Once: a following line is not another url of this title
+                        $url = [];
                     }
                 }
             }
@@ -265,22 +269,48 @@ class RefreshPlaylist extends Command
         }
     }
 
-    protected function createUrl($urlImport, $playlist)
+    /**
+     * The provider changes the token or the server of its urls (new subscription...), not the stream id
+     * ending them: the known url takes the new address, with its views (favorites, history, progress)
+     * and its TMDB data, instead of being removed and imported again
+     */
+    protected function followChangedUrls(array $playlists)
     {
-        $url = new UrlImport();
-        $url->url = $urlImport['url'];
-        $url->episod = $urlImport['episod'];
-        $url->season = $urlImport['season'];
-        $url->category = $urlImport['category'];
-        $url->filter = $urlImport['filter'];
-        $url->picture = $urlImport['picture'];
-        $url->name = $urlImport['name'];
-        $url->short_name = $urlImport['short_name'];
-        $url->tvchannel = $urlImport['tvchannel'];
-        $url->serie = $urlImport['serie'];
-        $url->movie = $urlImport['movie'];
-        $url->playlist_id = $playlist->id;
-        $url->save();
+        $ids = collect($playlists)->pluck('id');
+        $notInImports = fn ($query) => $query->select(DB::raw(1))->from('url_imports')->whereColumn('url_imports.url', 'urls.url');
+        $notInUrls = fn ($query) => $query->select(DB::raw(1))->from('urls')->whereColumn('urls.url', 'url_imports.url');
+
+        // Known urls missing from the import, by playlist and stream key
+        $missing = [];
+        $duplicates = [];
+        foreach (DB::table('urls')->whereIn('playlist_id', $ids)->whereNotExists($notInImports)->select('id', 'url', 'playlist_id')->cursor() as $url) {
+            $key = Url::streamKey($url->url);
+            if ($key !== null) {
+                $duplicates[$url->playlist_id . $key] = isset($missing[$url->playlist_id . $key]);
+                $missing[$url->playlist_id . $key] = $url;
+            }
+        }
+
+        $nb = 0;
+        // Not on the first import: nothing is missing
+        $imports = $missing ? DB::table('url_imports')->whereNotExists($notInUrls)->select('url', 'playlist_id')->get() : [];
+        DB::transaction(function () use ($imports, &$missing, $duplicates, &$nb) {
+            // views.url references urls.url: checked once both are changed
+            DB::statement('PRAGMA defer_foreign_keys = ON');
+            foreach ($imports as $import) {
+                $key = $import->playlist_id . Url::streamKey($import->url);
+                // A key found twice is not reliable
+                if (!isset($missing[$key]) || $duplicates[$key]) {
+                    continue;
+                }
+                $old = $missing[$key];
+                DB::table('urls')->where('id', $old->id)->update(['url' => $import->url]);
+                DB::table('views')->where('url', $old->url)->update(['url' => $import->url]);
+                unset($missing[$key]);
+                $nb++;
+            }
+        });
+        $this->info($nb . ' changed urls followed');
     }
 
     /**
@@ -297,8 +327,8 @@ class RefreshPlaylist extends Command
     }
 
     /**
-     * Remove the urls of a playlist which are not in its new import anymore, with their pictures.
-     * The views stay: favorites and history come back if the url comes back
+     * Remove the urls of a playlist which are not in its new import anymore, with their pictures
+     * and their views (by the foreign key). A url whose address changed was followed before
      */
     protected function removeMissingUrls($playlist)
     {

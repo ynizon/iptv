@@ -1,12 +1,10 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CronController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\M3uController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisibleCategoryController;
 use App\Models\User;
@@ -14,7 +12,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/cron', [CronController::class, 'cron'])->name('cron');
 Route::get('/', function () {
     if (Auth::id()){
         return redirect('dashboard');
@@ -57,8 +54,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/visible-categories', [VisibleCategoryController::class, 'store'])->name('visible-categories.store');
     Route::get('/dashboard', [SearchController::class, 'dashboard'])->name('dashboard');
     Route::post('/search', [SearchController::class, 'search'])->name('search');
-	Route::get('/m3u', [M3uController::class, 'm3u'])->name('edit');
-	Route::post('/m3u', [M3uController::class, 'm3u'])->name('edit');
     Route::get('/favorite/{id}', [SearchController::class, 'favorite'])->name('favorite');
     Route::post('/favorite_serie', [SearchController::class, 'favorite_serie'])->name('favorite_serie');
     Route::get('/remove/{id}', [SearchController::class, 'remove'])->name('remove');
@@ -70,7 +65,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/detail/{id}', [SearchController::class, 'detail'])->name('detail');
     Route::get('/detail_serie/{id}', [SearchController::class, 'detailSerie'])->name('detail_serie');
     Route::get('/export', [SearchController::class, 'export'])->name('export');
-	Route::get('/check/{id}', [SearchController::class, 'check'])->name('check');
     Route::post('/add_tv', [SearchController::class, 'add_tv'])->name('add_tv');
 });
 

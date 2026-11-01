@@ -37,7 +37,10 @@ VOLUME /data
 #Expose the port
 EXPOSE 80
 
+# Several requests at once (needs --no-reload): with a single one, a poster downloaded from TMDB (up to 10 s) blocked every page
+ENV PHP_CLI_SERVER_WORKERS=4
+
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Start cron + php command (use supervisord for production)
-CMD ["sh", "-c", "cron && exec php artisan serve --host=0.0.0.0 --port=80"]
+CMD ["sh", "-c", "cron && exec php artisan serve --host=0.0.0.0 --port=80 --no-reload"]

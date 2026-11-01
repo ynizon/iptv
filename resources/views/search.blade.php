@@ -12,7 +12,7 @@
         <symbol id="ci-close" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></g></symbol>
     </defs>
 </svg>
-<div class="catalog" id="catalog" data-recent="{{ request('category') == -2 ? 1 : 0 }}" data-added="{{ \App\Models\Category::isRecentlyAdded(request('category')) ? 1 : 0 }}" data-labels="{{ json_encode(['one' => __(':count title'), 'many' => __(':count titles'), 'bestFirst' => __(', best rated first'), 'addedFirst' => __(', last added first'), 'loadError' => __('The details could not be loaded. Select the title again to retry.'),'empty' => __('No title matches. Try without « Good ratings only ».')]) }}">
+<div class="catalog" id="catalog" data-recent="{{ request('category') == -2 ? 1 : 0 }}" data-added="{{ \App\Models\Category::isRecentlyAdded(request('category')) ? 1 : 0 }}" data-labels="{{ json_encode(['one' => __(':count title'), 'many' => __(':count titles'), 'bestFirst' => __(', best rated first'), 'newestFirst' => __(', most recent first'), 'addedFirst' => __(', last added first'), 'loadError' => __('The details could not be loaded. Select the title again to retry.'),'empty' => __('No title matches. Try without « Good ratings only ».')]) }}">
     <div class="cat-tabs" role="tablist" aria-label="{{__("Content type")}}">
         @if (count($urls["movies"]) > 0)
             <button type="button" class="cat-tab" role="tab" data-tab="movies">{{__("Movies")}} <span>{{count($urls["movies"])}}</span></button>
@@ -40,8 +40,8 @@
         @if (\App\Models\Category::isRecentlyAdded(request('category')))
             <button type="button" class="cat-chip" data-sort="added">{{__("Recently added")}}</button>
         @endif
-        <button type="button" class="cat-chip" data-sort="score">{{__("Best rated")}}</button>
         <button type="button" class="cat-chip" data-sort="year">{{__("Most recent")}}</button>
+        <button type="button" class="cat-chip" data-sort="score">{{__("Best rated")}}</button>
         <button type="button" class="cat-chip" data-sort="az">{{__("A → Z")}}</button>
         <span class="cat-tools-sep"></span>
         <button type="button" class="cat-chip" data-filter="good">
@@ -109,7 +109,9 @@
                         @php($first = $firstEpisodes[$serie])
                         @php($parsed = $first->parsedName())
                         @php($rating = $first->rating())
-                        @php($nbEpisodes = array_sum(array_map('count', $seasons)))
+                        {{-- The whole series, not only the episodes of this page --}}
+                        @php($nbSeasons = max(count($seasons), $seriesTotals[$serie]["seasons"] ?? 0))
+                        @php($nbEpisodes = max(array_sum(array_map('count', $seasons)), $seriesTotals[$serie]["episodes"] ?? 0))
                         <button type="button" class="cat-card" data-order="{{$loop->index}}" data-id="s{{$first->id}}" data-score="{{$first->score}}"
                                 data-year="{{$first->year}}" data-title="{{mb_strtolower($parsed['title'])}}"
                                 data-good="{{$rating['good'] ? 1 : 0}}" data-low="{{$rating['low'] ? 1 : 0}}"
@@ -127,7 +129,7 @@
                                 </span>
                             </span>
                             <span class="cat-title">{{$parsed['title']}}</span>
-                            <span class="cat-meta">{{implode(' · ', array_filter(array_merge([$first->year ?: null, trans_choice(':count season|:count seasons', count($seasons)), trans_choice(':count ep.|:count ep.', $nbEpisodes)], $parsed['tags'])))}}</span>
+                            <span class="cat-meta">{{implode(' · ', array_filter(array_merge([$first->year ?: null, trans_choice(':count season|:count seasons', $nbSeasons), trans_choice(':count ep.|:count ep.', $nbEpisodes)], $parsed['tags'])))}}</span>
                             <span class="cat-sub">{{$rating['sub']}}</span>
                         </button>
                     @endforeach
