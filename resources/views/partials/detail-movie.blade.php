@@ -56,4 +56,28 @@
             {{__("Remove")}}
         </button>
     </div>
+    @if (count($versions ?? []))
+        {{-- The same movie in another resolution or language --}}
+        <details class="cat-season" open>
+            <summary>{{__("Other versions")}} <span>{{count($versions)}}</span></summary>
+            <ul>
+                @foreach ($versions as $version)
+                    <li>
+                        <a id="ahref-{{$version->id}}" href="iptv://{{$version->urlFinal}}#{{$version->counterSec(Auth::id())}}" data-id="{{$version->id}}" class="stream cat-episode" title="{{$version->name}}">
+                            <svg width="14" height="14" aria-hidden="true"><use href="#ci-play"/></svg>
+                            {{implode(' · ', $version->parsedName()['tags']) ?: $version->name}}
+                        </a>
+                        <span id="urlname-{{$version->id}}" hidden>{{$version->name}}</span>
+                        <span class="counter" data-min="{{$version->counterMin(Auth::id())}}" id="counter-{{$version->id}}">{{$version->counter(Auth::id())}}</span>
+                        <button type="button" class="cat-icon" onclick="copyLink(@js($version->urlFinal))" aria-label="{{__("Copy link")}}">
+                            <svg width="16" height="16" aria-hidden="true"><use href="#ci-copy"/></svg>
+                        </button>
+                        <button type="button" class="cat-icon" title="{{$tvLink}}" onclick="addTvStream(this, @js($version->url), @js($tvLink))" aria-label="{{__("Send to TV")}}">
+                            <svg width="16" height="16" aria-hidden="true"><use href="#ci-tv"/></svg>
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+        </details>
+    @endif
 </div>

@@ -68,7 +68,11 @@
                     @foreach ($urls["movies"] as $url)
                         @php($parsed = $url->parsedName())
                         @php($rating = $url->rating())
+                        {{-- The other versions of the same movie (resolution, language...) are in its detail --}}
+                        @php($others = $versions[$url->id] ?? [])
+                        @php($tags = collect([$url, ...$others])->flatMap(fn ($version) => $version->parsedName()['tags'])->unique()->all())
                         <button type="button" class="cat-card" data-order="{{$loop->index}}" data-id="{{$url->id}}" data-score="{{$url->score}}"
+                                @if ($others) data-versions="{{collect($others)->pluck('id')->implode(',')}}" @endif
                                 data-year="{{$parsed['year'] ?? $url->year}}" data-title="{{mb_strtolower($parsed['title'])}}"
                                 data-good="{{$rating['good'] ? 1 : 0}}" data-low="{{$rating['low'] ? 1 : 0}}"
                                 aria-label="{{$parsed['title']}}, {{$rating['label']}} {{$rating['badge']}}">
@@ -78,7 +82,7 @@
                                 @if ($url->isDoubtful())
                                     <span class="cat-doubt" title="{{__("TMDB data to check")}}">!</span>
                                 @endif
-                                @if ($url->isNew())
+                                @if (collect([$url, ...$others])->contains(fn ($version) => $version->isNew()))
                                     <span class="cat-new">{{__("New")}}</span>
                                 @endif
                                 <span class="cat-flags">
@@ -89,7 +93,7 @@
                                 </span>
                             </span>
                             <span class="cat-title">{{$parsed['title']}}</span>
-                            <span class="cat-meta">{{implode(' · ', array_filter(array_merge([$parsed['year'] ?? ($url->year ?: null)], $parsed['tags'])))}}</span>
+                            <span class="cat-meta">{{implode(' · ', array_filter(array_merge([$parsed['year'] ?? ($url->year ?: null)], $tags, [$others ? trans_choice(':count version|:count versions', count($others) + 1) : null])))}}</span>
                             <span class="cat-sub">{{$rating['sub']}}</span>
                         </button>
                     @endforeach

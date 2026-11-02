@@ -6,6 +6,8 @@
     <span >{{__("Recent")}}</span></li>
 <li style="cursor: pointer" class="category"
     data-category=""> <i class="fa fa-star"></i> <span >{{__("Tous")}}</span></li>
+<li style="cursor: pointer" class="category" title="{{__("The main French channels")}}"
+    data-category="{{\App\Models\Category::MAIN_TV}}"> <i class="fa fa-tv"></i> <span >{{__("TV")}}</span></li>
 <li><br/></li>
 @foreach ($categories as $category)
     @if ($category != '')

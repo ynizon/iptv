@@ -49,7 +49,7 @@ class SearchController extends Controller
 
     public function search(Request $request) {
         $formats = $request->input("formats");
-        [$urls, $firstEpisodes] = $this->results((string) $request->input("search"), $request->input("category"), $formats ?: []);
+        [$urls, $firstEpisodes, $versions] = $this->results((string) $request->input("search"), $request->input("category"), $formats ?: []);
         $seriesTotals = $this->seriesTotals(array_keys($urls["series"]));
 
         $date = new DateTime();
@@ -67,17 +67,19 @@ class SearchController extends Controller
             }
         }
 
-        return view("search", compact("urls", "firstEpisodes", "seriesTotals", "warnings"));
+        return view("search", compact("urls", "firstEpisodes", "versions", "seriesTotals", "warnings"));
     }
 
     /**
      * The channels and movies of a search as a M3U file (for Kodi), made only when asked
      */
     public function export(Request $request) {
-        [$urls] = $this->results((string) $request->input("search"), $request->input("category"), $this->hiddenFormats());
+        [$urls, , $versions] = $this->results((string) $request->input("search"), $request->input("category"), $this->hiddenFormats());
+        // Every version of the movies
+        $movies = array_merge($urls["movies"], ...array_values($versions));
 
         $content = "#EXTM3U" . PHP_EOL;
-        foreach (array_merge($urls["channels"], $urls["movies"]) as $url) {
+        foreach (array_merge($urls["channels"], $movies) as $url) {
             $content .= '#EXTINF:-1 tvg-id="'.$url['id'].'" tvg-name="'.$url['name'].'" tvg-logo="'.$url['picture'].'" group-title="'.$url['category'].'",'.$url['name'].PHP_EOL;
             $content .= $url->urlFinal . PHP_EOL;
         }
@@ -90,11 +92,18 @@ class SearchController extends Controller
     /**
      * Detail panel of a movie, loaded when its card is selected
      */
-    public function detail($id) {
+    public function detail(Request $request, $id) {
         $url = Url::findOrFail($id);
         $url->urlFinal = $this->replaceUrlDns($url->url);
+        // The other versions of the movie grouped on its card, in their order
+        $ids = array_filter(array_map('intval', explode(",", (string) $request->input("versions"))));
+        $versions = Url::whereIn("id", $ids)->where("movie", 1)->get()
+            ->sortBy(fn ($version) => array_search($version->id, $ids))->values();
+        foreach ($versions as $version) {
+            $version->urlFinal = $this->replaceUrlDns($version->url);
+        }
 
-        return view("partials.detail-movie", compact("url"));
+        return view("partials.detail-movie", compact("url", "versions"));
     }
 
     /**
@@ -121,7 +130,11 @@ class SearchController extends Controller
      * Movies, series (name => season => episod => url) and channels of a search, with the first episode of each series
      */
     private function results(string $query, $category, array $formats): array {
-        if ($query == '' && $category != -1 && $category != -2) {
+        if ($category === Category::MAIN_TV) {
+            // The main channels, searched among themselves
+            $urlsTmp = Category::pageUrls(Category::MAIN_TV)
+                ->filter(fn ($url) => $query == '' || mb_stripos($url->name, $query) !== false);
+        } elseif ($query == '' && $category != -1 && $category != -2) {
             // A whole category (or every one): cached after each refresh
             $urlsTmp = Category::pageUrls((string) $category);
         } else {
@@ -181,7 +194,43 @@ class SearchController extends Controller
             }
         }
 
-        return [$urls, $firstEpisodes];
+        [$urls["movies"], $versions] = $this->groupVersions($urls["movies"]);
+
+        return [$urls, $firstEpisodes, $versions];
+    }
+
+    /**
+     * The movies of the same title and year (one per resolution, language...) on one card:
+     * the 1080p one is shown, the others are listed as versions in its detail
+     * @return array [movies shown, id of a movie shown => its other versions]
+     */
+    private function groupVersions(array $movies): array {
+        $groups = [];
+        foreach ($movies as $url) {
+            $parsed = $url->parsedName();
+            $groups[mb_strtolower($parsed['title']) . '|' . ($parsed['year'] ?? ($url->year ?: ''))][] = $url;
+        }
+
+        $rank = function (Url $url) {
+            foreach (['1080p', '4K', '720p'] as $position => $tag) {
+                if (in_array($tag, $url->parsedName()['tags'])) {
+                    return $position;
+                }
+            }
+            return 3;
+        };
+        $shown = [];
+        $versions = [];
+        foreach ($groups as $group) {
+            usort($group, fn ($a, $b) => $rank($a) <=> $rank($b));
+            $first = array_shift($group);
+            $shown[] = $first;
+            if ($group) {
+                $versions[$first->id] = $group;
+            }
+        }
+
+        return [$shown, $versions];
     }
 
     /**

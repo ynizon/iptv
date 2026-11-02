@@ -16,6 +16,17 @@ class Category extends Model
     // A category page stays cached for a week, or until the next refresh
     public const PAGE_TTL = 7 * 24 * 3600;
 
+    // Virtual category of the main French channels (-1 and -2 are the favorites and the recent ones)
+    public const MAIN_TV = "-3";
+
+    // The main French channels in the TNT order: the names given by the provider, without the quality
+    public const MAIN_CHANNELS = [
+        ['TF1'], ['FRANCE 2'], ['FRANCE 3'], ['CANAL+ (DOUBLE AUDIO)', 'CANAL+'], ['FRANCE 5'], ['M6'], ['ARTE'],
+        ['C8'], ['W9'], ['TMC'], ['TFX'], ['NRJ 12', 'NRJ12'], ['LCP'], ['FRANCE 4'], ['BFM TV'], ['CNEWS'],
+        ['CSTAR'], ['GULLI'], ['TF1 SERIES FILMS'], ["L'EQUIPE", "L'ÉQUIPE"], ['6TER'], ['RMC STORY'],
+        ['RMC DECOUVERTE', 'RMC DÉCOUVERTE'], ['CHERIE 25', 'CHÉRIE 25'], ['LCI'], ['FRANCE INFO', 'FRANCEINFO'],
+    ];
+
     protected $fillable = [
         'from',
         'to'
@@ -58,7 +69,7 @@ class Category extends Model
     public static function warmPages(): int
     {
         self::clearCache();
-        $categories = array_merge([""], array_keys(self::groups()));
+        $categories = array_merge(["", self::MAIN_TV], array_keys(self::groups()));
         foreach ($categories as $category) {
             self::pageUrls($category);
         }
@@ -71,8 +82,47 @@ class Category extends Model
         return "page_" . md5($category);
     }
 
+    /**
+     * One url per main French channel, in the TNT order: the full HD one, else HD, else SD
+     * (the 4K, HEVC and backup streams are left out, less reliable)
+     */
+    public static function mainChannels(): Collection
+    {
+        $channels = [];
+        $positions = [];
+        foreach (self::MAIN_CHANNELS as $position => $names) {
+            foreach ($names as $alias => $name) {
+                $positions[mb_strtoupper($name)] = [$position, $alias];
+            }
+        }
+        $quality = fn (array $tags) => match ($tags) {
+            ['FHD'] => 0, ['HD'] => 1, [] => 2, ['SD'] => 3, default => null,
+        };
+
+        $candidates = Url::where("tvchannel", 1)->where("filter", 0)->where("name", "like", "|FR|%")->orderBy("id")->get();
+        foreach ($candidates as $url) {
+            $channel = $url->channelName();
+            [$position, $alias] = $positions[mb_strtoupper($channel['name'])] ?? [null, null];
+            $rank = $quality($channel['tags']);
+            if ($position === null || $rank === null) {
+                continue;
+            }
+            // The first name of the channel first, then the best quality
+            $score = $alias * 10 + $rank;
+            if (!isset($channels[$position]) || $score < $channels[$position][0]) {
+                $channels[$position] = [$score, $url];
+            }
+        }
+        ksort($channels);
+
+        return new Collection(array_column($channels, 1));
+    }
+
     protected static function queryPageUrls(string $category): Collection
     {
+        if ($category === self::MAIN_TV) {
+            return self::mainChannels();
+        }
         $query = Url::where("filter", "=", 0);
         if ($category != '') {
             $query->whereIn("category", self::groups()[$category] ?? [$category]);

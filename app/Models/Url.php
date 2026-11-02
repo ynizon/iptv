@@ -101,7 +101,7 @@ class Url extends Model
         }
 
         $labels = ['MULTI' => 'VF + VO', 'FR' => 'VF', 'VOST FR' => 'VOSTFR', 'VOSTFR' => 'VOSTFR',
-            'BLU-RAY' => 'Blu-ray', 'HD' => '720p', 'FHD' => '1080p', 'UHD' => '4K', '4K' => '4K', '3D' => '3D'];
+            'VO' => 'VO', 'BLU-RAY' => 'Blu-ray', 'HD' => '720p', 'FHD' => '1080p', 'UHD' => '4K', '4K' => '4K', 'HDR' => 'HDR', '3D' => '3D'];
         $tags = [];
         $addTag = function ($tag) use (&$tags, $labels) {
             $label = $labels[strtoupper($tag)] ?? $tag;
@@ -117,8 +117,8 @@ class Url extends Model
             $titleYear = (int) $matches[1][0];
             $title = substr($title, 0, $matches[0][1]);
         }
-        $title = preg_replace_callback('/\((MULTI|FR|VOST ?FR|HD|FHD|UHD|4K|3D|Blu-Ray)\)/i', fn ($m) => $addTag($m[1]), $title);
-        $title = preg_replace_callback('/\b(FHD|UHD|4K|HD|MULTI|Multi)\b/', fn ($m) => $addTag($m[1]), $title);
+        $title = preg_replace_callback('/\((MULTI|FR|VOST ?FR|VO|HD|FHD|UHD|4K|3D|Blu-Ray)\)/i', fn ($m) => $addTag($m[1]), $title);
+        $title = preg_replace_callback('/\b(FHD|UHD|4K|HDR|HD|MULTI|Multi|Blu-Ray)\b/', fn ($m) => $addTag($m[1]), $title);
         $title = trim(preg_replace('/\s+/', ' ', $title));
         $title = preg_replace('/\s*-\s*$/', '', $title);
 

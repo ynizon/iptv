@@ -133,6 +133,40 @@ class CatalogTest extends TestCase
             ->assertSee('Saison 02');
     }
 
+    public function test_the_tv_category_gives_one_stream_per_main_channel_in_the_tnt_order(): void
+    {
+        $channel = ['tvchannel' => 1, 'movie' => 0];
+        $this->url('|FR| FRANCE 2 HD', 'FR TV HD (France)', $channel);
+        $this->url('|FR| TF1 HD', 'FR TV HD (France)', $channel);
+        $this->url('|FR| TF1 FHD', 'FR TV FULL HD|4K  (France)', $channel);
+        $this->url('|FR| TF1 4K HDR UHD (Résolution Exclus)', 'FR TV FULL HD|4K  (France)', $channel);
+        $this->url('|FR| M6 HEVC', 'FR TV HEVC (France)', $channel);
+        $this->url('|FR| PARIS PREMIERE FHD', 'FR TV FULL HD|4K  (France)', $channel);
+
+        $this->assertSame(['|FR| TF1 FHD', '|FR| FRANCE 2 HD'], Category::pageUrls(Category::MAIN_TV)->pluck('name')->all());
+
+        $this->actingAs($this->user())->post('/search', ['search' => 'france', 'category' => Category::MAIN_TV])
+            ->assertOk()->assertSee('FRANCE 2')->assertDontSee('TF1');
+    }
+
+    public function test_the_versions_of_a_movie_are_grouped_on_one_card(): void
+    {
+        $hd = $this->url('La Fracture (FR) HD 2021', 'DRAME');
+        $fhd = $this->url('La Fracture (FR) FHD 2021', 'DRAME');
+        $uhd = $this->url('La Fracture (4K) HDR 2021', 'DRAME');
+        // Same title, another movie
+        $this->url('La Fracture (FR) FHD 1990', 'DRAME');
+
+        $page = $this->actingAs($this->user())->post('/search', ['search' => '', 'category' => 'DRAME'])->assertOk();
+        // The 1080p one shows, with the others
+        $page->assertSee('data-id="' . $fhd->id . '"', false)->assertDontSee('data-id="' . $hd->id . '"', false)
+            ->assertSee('data-versions="' . $uhd->id . ',' . $hd->id . '"', false)->assertSee('3 versions');
+        $this->assertSame(2, substr_count($page->getContent(), 'class="cat-card"'));
+
+        $this->get('/detail/' . $fhd->id . '?versions=' . $uhd->id . ',' . $hd->id)->assertOk()
+            ->assertSee('Autres versions')->assertSee('ahref-' . $hd->id, false)->assertSee('4K · HDR');
+    }
+
     public function test_the_export_gives_a_m3u_file(): void
     {
         $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION');

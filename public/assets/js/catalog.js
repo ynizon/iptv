@@ -133,7 +133,10 @@ window.Catalog = (function () {
         placeholder.dataset.detail = id;
         placeholder.innerHTML = '<span class="loader"></span>';
         pane.querySelector(".cat-detail").appendChild(placeholder);
-        const url = id.charAt(0) === "s" ? "/detail_serie/" + id.substring(1) : "/detail/" + id;
+        // A movie card can group several versions of the movie
+        const card = pane.querySelector('.cat-card[data-id="' + id + '"]');
+        const versions = card && card.dataset.versions ? "?versions=" + card.dataset.versions : "";
+        const url = id.charAt(0) === "s" ? "/detail_serie/" + id.substring(1) : "/detail/" + id + versions;
         $.get(url).done((html) => {
             const box = document.createElement("div");
             box.innerHTML = html;
