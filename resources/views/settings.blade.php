@@ -54,7 +54,7 @@
 
     <section class="set-card">
         <h2>{{__('Play with VLC')}}</h2>
-        <p>{{__('The Play buttons open the video in VLC: install it once on each computer.')}}</p>
+        <p>{{__('The Play buttons open the video in VLC: install it once on each device.')}}</p>
         <div class="set-row">
             <div class="set-field">
                 <strong>Windows</strong>
@@ -70,6 +70,13 @@
                     <li>{!! __('Copy :file to <code>~/.local/share/applications/</code>', ['file' => '<a href="/download/iptvdesktop">iptv.desktop</a>']) !!}</li>
                     <li>{!! __('Copy :file to <code>/usr/local/bin</code>', ['file' => '<a href="/download/iptvsh">iptv_vlc.sh</a>']) !!}</li>
                     <li>{{__('Run:')}} <code>xdg-mime default iptv.desktop x-scheme-handler/iptv_vlc.sh</code></li>
+                </ol>
+            </div>
+            <div class="set-field">
+                <strong>{{__('Android, iPhone, iPad')}}</strong>
+                <ol class="set-steps">
+                    <li>{{__('Install')}} VLC : <a href="https://play.google.com/store/apps/details?id=org.videolan.vlc">Play Store</a>, <a href="https://apps.apple.com/app/vlc-media-player/id650377962">App Store</a></li>
+                    <li>{{__('Nothing else: the Play buttons open VLC directly (on Android, the video starts where you left it).')}}</li>
                 </ol>
             </div>
         </div>

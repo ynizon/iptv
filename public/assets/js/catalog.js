@@ -251,3 +251,41 @@ function catalogLogoMissing(img) {
 function catalogSync(id) { Catalog.sync(id); }
 function catalogRemove(id) { Catalog.remove(id); }
 function catalogRemoveSerie(name, id) { Catalog.removeSerie(name, id); }
+
+// The Play links are "iptv://<stream url>#<start in seconds>", opened by VLC through the handler installed
+// on the computer (Settings). Android and iOS do not know them: VLC is opened with their own links
+function catalogPlayLink(href, title) {
+    const match = /^iptv:\/\/(https?):?\/\/([^#]*)(?:#(\d+))?$/.exec(href);
+    if (!match) {
+        return null;
+    }
+    const [, scheme, stream, start] = match;
+    const userAgent = navigator.userAgent;
+    if (/Android/i.test(userAgent)) {
+        // Chrome, Firefox and Samsung Internet give the stream to VLC, or open its page on the Play Store
+        return "intent://" + stream + "#Intent;scheme=" + scheme + ";package=org.videolan.vlc;type=video/*;"
+            + (parseInt(start, 10) > 0 ? "l.position=" + parseInt(start, 10) * 1000 + ";" : "")
+            + (title ? "S.title=" + encodeURIComponent(title) + ";" : "")
+            + "S.browser_fallback_url=" + encodeURIComponent("https://play.google.com/store/apps/details?id=org.videolan.vlc") + ";end";
+    }
+    // The iPads give a Mac user agent, but have a touch screen
+    if (/iPad|iPhone|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && navigator.maxTouchPoints > 1)) {
+        return "vlc-x-callback://x-callback-url/stream?url=" + encodeURIComponent(scheme + "://" + stream);
+    }
+
+    return null;
+}
+
+document.addEventListener("click", (event) => {
+    const link = event.target.closest('a[href^="iptv://"]');
+    if (!link) {
+        return;
+    }
+    const name = document.getElementById("urlname-" + link.dataset.id);
+    const target = catalogPlayLink(link.getAttribute("href"), name ? name.textContent.trim() : link.title);
+    if (target) {
+        // The other click handlers (progress counter) still run
+        event.preventDefault();
+        window.location.href = target;
+    }
+});

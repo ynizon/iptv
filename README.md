@@ -43,7 +43,7 @@ php artisan refresh:info
 ````
 
 ### Playing the videos
-The Play buttons open the videos in VLC. Settings › Play with VLC explains how to set it up on Windows and Linux.
+The Play buttons open the videos in VLC. On Windows and Linux, a small handler of the `iptv://` links is installed once (Settings › Play with VLC). On Android, the links open VLC directly (`intent:` links, the video starts where you left it), on iPhone and iPad through `vlc-x-callback://`: only VLC is needed.
 
 ## Updating the library
 ````
