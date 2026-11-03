@@ -66,7 +66,9 @@ class RefreshInfo extends Command
         } else {
             $query->where(function ($query) {
                 // Series rated before their number of votes was stored
-                $query->whereNull("imdb")->orWhere(fn ($q) => $q->where("serie", 1)->where("votes", "<=", 0)->where("note", ">", 0));
+                $query->whereNull("imdb")->orWhere(fn ($q) => $q->where("serie", 1)->where("votes", "<=", 0)->where("note", ">", 0))
+                    // Found before their length was stored
+                    ->orWhereNull("duration");
             });
         }
         $limit = (int) $this->option('limit');
@@ -106,6 +108,7 @@ class RefreshInfo extends Command
                 $url->year = $infos['year'];
                 $url->note = $infos['note'];
                 $url->imdb = $infos['overview'];
+                $url->duration = $infos['duration'];
                 if ($infos['poster'] != '' && $url->picture != $infos['poster']) {
                     $url->picture = $infos['poster'];
                     // Drop the resized copy of the previous picture
@@ -196,7 +199,7 @@ class RefreshInfo extends Command
     }
 
     /**
-     * @return array votes, year, note, overview, poster
+     * @return array votes, year, note, overview, poster, duration (minutes, of an episode for a series)
      */
     protected function infos($tmdb, bool $isMovie, int $id, array $options): array
     {
@@ -205,6 +208,7 @@ class RefreshInfo extends Command
 
         return [
             'votes' => $infos->getNbNotes(),
+            'duration' => $isMovie ? $infos->getRuntime() : $infos->getEpisodeRunTime(),
             'year' => $infos->getReleaseDate() != '' ? substr($infos->getReleaseDate(), 0, 4) : '',
             'note' => $infos->getNote(),
             'overview' => (string) $infos->getOverview(),

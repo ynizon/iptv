@@ -43,7 +43,7 @@ php artisan refresh:info
 ````
 
 ### Playing the videos
-The Play buttons open the videos in VLC. On Windows and Linux, a small handler of the `iptv://` links is installed once (Settings › Play with VLC). On Android, the links open VLC directly (`intent:` links, the video starts where you left it), on iPhone and iPad through `vlc-x-callback://`: only VLC is needed.
+The Play buttons open the videos in VLC. On a computer, they download by default a small VLC playlist (`.xspf`, with the resume position): check « Always open files of this type » once in the browser and the next videos open in one click, nothing to install but VLC. A computer can use instead the `iptv://` links, with a small handler installed once (Settings › Play with VLC, chosen on each computer). On Android, the links open VLC directly (`intent:` links, the video starts where you left it), on iPhone and iPad through `vlc-x-callback://`: only VLC is needed.
 
 ## Updating the library
 ````

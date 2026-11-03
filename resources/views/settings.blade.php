@@ -55,6 +55,22 @@
     <section class="set-card">
         <h2>{{__('Play with VLC')}}</h2>
         <p>{{__('The Play buttons open the video in VLC: install it once on each device.')}}</p>
+        {{-- Chosen for each computer (kept in the browser): one may have the iptv:// handler, another not --}}
+        <p>{{__('On this computer, the Play buttons:')}}</p>
+        <div class="set-checks" id="desktop-player">
+            <label class="set-check"><input type="radio" name="desktop_player" value="xspf"> {{__('Download a VLC file (nothing to install)')}}</label>
+            <label class="set-check"><input type="radio" name="desktop_player" value="protocol"> {{__('Open the iptv:// link (handler below)')}}</label>
+        </div>
+        <p class="set-help">{{__('With the VLC file, check « Always open files of this type » in the downloads of the browser the first time: the next videos open in one click, where you left them.')}}</p>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                document.querySelectorAll("#desktop-player input").forEach((input) => {
+                    input.checked = input.value === catalogDesktopPlayer();
+                    input.addEventListener("change", () => catalogDesktopPlayer(input.value));
+                });
+            });
+        </script>
+        <p class="set-help">{{__('The iptv:// link needs a small handler, installed once:')}}</p>
         <div class="set-row">
             <div class="set-field">
                 <strong>Windows</strong>
@@ -69,7 +85,7 @@
                 <ol class="set-steps">
                     <li>{!! __('Copy :file to <code>~/.local/share/applications/</code>', ['file' => '<a href="/download/iptvdesktop">iptv.desktop</a>']) !!}</li>
                     <li>{!! __('Copy :file to <code>/usr/local/bin</code>', ['file' => '<a href="/download/iptvsh">iptv_vlc.sh</a>']) !!}</li>
-                    <li>{{__('Run:')}} <code>xdg-mime default iptv.desktop x-scheme-handler/iptv_vlc.sh</code></li>
+                    <li>{{__('Run:')}} <code>xdg-mime default iptv.desktop x-scheme-handler/iptv</code></li>
                 </ol>
             </div>
             <div class="set-field">

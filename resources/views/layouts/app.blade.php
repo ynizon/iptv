@@ -224,43 +224,80 @@
             });
         }
 
+        // The video being played: its progress in minutes is counted from the start time, not by adding
+        // ticks, which stop while VLC hides the browser (Android). It stops by itself at the end of the video
+        let playing = null;
+
         function addCounter(id)
         {
-            let counter = parseInt($("#counter-"+id).attr('data-min'));
-            $("#counter-"+id).attr('data-min', counter);
-            $("#counter-"+id).html(formatHour(counter));
-            $("#counter_title").html($("#urlname-"+id).html());
-            $("#counter").html(formatHour(counter));
-            myModal.show();
+            clearInterval(myInterval);
+            const link = document.getElementById("ahref-" + id);
+            playing = {
+                id: id,
+                start: parseInt($("#counter-"+id).attr('data-min')) || 0,
+                startedAt: Date.now(),
+                // From TMDB, 0 when unknown
+                duration: link ? parseInt(link.dataset.duration) || 0 : 0,
+            };
+            playing.minutes = playing.start;
             urlId = id;
+            $("#counter_title").html($("#urlname-"+id).html());
+            showProgress(playing.start);
+            myModal.show();
 
+            // Started now (recent list, warning to the other users), from the resume position
             $.ajax({
                 type: "GET",
-                url: "/counter/"+id+"/0",
+                url: "/counter/"+id+"/"+playing.start,
             });
 
-            myInterval = window.setInterval(
-                function ()
-                {
-                    let newCounter = parseInt($("#counter-"+id).attr('data-min')) + 1;
+            myInterval = window.setInterval(tickCounter, 30000);
+        }
 
-                    let updatedUrl = document.getElementById("ahref-"+urlId).href.replace(/#(\d+)$/, (match, p1) => {
-                        let newValue = parseInt(p1, 10) + 60;
-                        return `#${newValue}`;
-                    });
-                    document.getElementById("ahref-"+urlId).href = updatedUrl;
+        function tickCounter()
+        {
+            if (!playing) {
+                return;
+            }
+            const id = playing.id;
+            const minutes = playing.start + Math.floor((Date.now() - playing.startedAt) / 60000);
+            if (playing.duration > 0 && minutes >= playing.duration) {
+                setWatched();
+                return;
+            }
+            if (minutes === playing.minutes) {
+                return;
+            }
+            playing.minutes = minutes;
 
-                    $.ajax({
-                        type: "GET",
-                        url: "/counter/"+id+"/"+newCounter,
-                    })
-                    .done(function() {
-                        $("#counter-"+id).attr('data-min', newCounter);
-                        $("#counter-"+id).html(formatHour(newCounter));
-                        $("#counter").html(formatHour(newCounter));
-                    });
-                }, 60000
-            )
+            // The next play starts there
+            const link = document.getElementById("ahref-" + id);
+            if (link) {
+                link.setAttribute("href", link.getAttribute("href").replace(/#\d+$/, "#" + minutes * 60));
+            }
+            $.ajax({
+                type: "GET",
+                url: "/counter/"+id+"/"+minutes,
+            })
+            .done(function() {
+                $("#counter-"+id).attr('data-min', minutes);
+                $("#counter-"+id).html(formatHour(minutes));
+                if (playing && playing.id === id) {
+                    showProgress(minutes);
+                }
+            });
+        }
+
+        // Back on the page (VLC closed, tab shown again): the timers may have been stopped meanwhile
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                tickCounter();
+            }
+        });
+
+        function showProgress(minutes)
+        {
+            $("#counter").html((formatHour(minutes) || "0:00") + (playing && playing.duration > 0 ? " / " + formatHour(playing.duration) : ""));
         }
 
         function formatHour(minutesTime)
@@ -276,16 +313,24 @@
         }
 
         function setPaused(){
+            // Saves the minutes played until now
+            tickCounter();
             clearInterval(myInterval);
+            playing = null;
             myModal.hide();
         }
 
         function setWatched(){
             clearInterval(myInterval);
-            $("#eye-"+urlId).toggleClass("active");
+            playing = null;
+            $("#eye-"+urlId).addClass("active");
             catalogSync(urlId);
             $("#counter-"+urlId).html("");
             $("#counter-"+urlId).attr('data-min', 0);
+            const link = document.getElementById("ahref-" + urlId);
+            if (link) {
+                link.setAttribute("href", link.getAttribute("href").replace(/#\d+$/, "#0"));
+            }
             myModal.hide();
             $.ajax({
                 type: "GET",

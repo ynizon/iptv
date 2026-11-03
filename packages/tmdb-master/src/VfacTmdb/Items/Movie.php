@@ -117,7 +117,19 @@ class Movie extends Item implements MovieInterface
     }
 
     /**
-     * Get number of movie notes
+     * Get movie runtime, in minutes (0 when unknown)
+     * @return int
+     */
+    public function getRuntime() : int
+    {
+        if (isset($this->data->runtime)) {
+            return (int) $this->data->runtime;
+        }
+        return 0;
+    }
+
+    /**
+     * Get number of notes
      * @return float
      */
     public function getNbNotes() : float

@@ -457,5 +457,10 @@
     "The details could not be loaded. Select the title again to retry.": "Le détail n’a pas pu être chargé. Sélectionnez de nouveau le titre pour réessayer.",
     "The main French channels": "Les principales chaînes françaises",
     "Other versions": "Autres versions",
-    ":count version|:count versions": ":count version|:count versions"
+    ":count version|:count versions": ":count version|:count versions",
+    "On this computer, the Play buttons:": "Sur cet ordinateur, les boutons Lecture :",
+    "Download a VLC file (nothing to install)": "Téléchargent un fichier VLC (rien à installer)",
+    "Open the iptv:// link (handler below)": "Ouvrent le lien iptv:// (gestionnaire ci-dessous)",
+    "With the VLC file, check « Always open files of this type » in the downloads of the browser the first time: the next videos open in one click, where you left them.": "Avec le fichier VLC, cochez « Toujours ouvrir les fichiers de ce type » dans les téléchargements du navigateur la première fois : les vidéos suivantes s’ouvrent en un clic, là où vous les aviez laissées.",
+    "The iptv:// link needs a small handler, installed once:": "Le lien iptv:// nécessite un petit gestionnaire, à installer une fois :"
 }

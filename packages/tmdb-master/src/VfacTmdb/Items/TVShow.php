@@ -77,6 +77,21 @@ class TVShow extends Item implements TVShowInterface
     }
 
     /**
+     * Get TVshow episode runtime, in minutes (0 when unknown): the declared one, else the one of the last aired episode
+     * @return int
+     */
+    public function getEpisodeRunTime() : int
+    {
+        if (!empty($this->data->episode_run_time)) {
+            return (int) $this->data->episode_run_time[0];
+        }
+        if (isset($this->data->last_episode_to_air->runtime)) {
+            return (int) $this->data->last_episode_to_air->runtime;
+        }
+        return 0;
+    }
+
+    /**
      * Get TVshow number of votes
      * @return float
      */

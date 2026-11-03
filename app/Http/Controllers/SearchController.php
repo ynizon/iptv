@@ -13,6 +13,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SearchController extends Controller
 {
@@ -68,6 +69,33 @@ class SearchController extends Controller
         }
 
         return view("search", compact("urls", "firstEpisodes", "versions", "seriesTotals", "warnings"));
+    }
+
+    /**
+     * A VLC playlist of one stream, for the computers without the iptv:// handler: VLC opens it
+     * at the resume position given by the page, which follows the play
+     */
+    public function play(Request $request, $id) {
+        $url = Url::findOrFail($id);
+        $title = $url->tvchannel ? $url->channelName()["name"] : $url->name;
+        $start = max(0, (int) $request->input("start"));
+        $xml = fn (string $text) => htmlspecialchars($text, ENT_XML1 | ENT_QUOTES, "UTF-8");
+
+        $content = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL
+            . '<playlist xmlns="http://xspf.org/ns/0/" xmlns:vlc="http://www.videolan.org/vlc/playlist/ns/0/" version="1">' . PHP_EOL
+            . '  <title>' . $xml($title) . '</title>' . PHP_EOL
+            . '  <trackList>' . PHP_EOL
+            . '    <track>' . PHP_EOL
+            . '      <location>' . $xml($this->replaceUrlDns($url->url)) . '</location>' . PHP_EOL
+            . '      <title>' . $xml($title) . '</title>' . PHP_EOL
+            . ($start > 0 ? '      <extension application="http://www.videolan.org/vlc/playlist/0"><vlc:option>start-time=' . $start . '</vlc:option></extension>' . PHP_EOL : '')
+            . '    </track>' . PHP_EOL
+            . '  </trackList>' . PHP_EOL
+            . '</playlist>' . PHP_EOL;
+
+        return response($content)
+            ->header('Content-Type', 'application/xspf+xml')
+            ->header('Content-Disposition', 'attachment; filename="' . (Str::slug($title) ?: 'video') . '.xspf"');
     }
 
     /**

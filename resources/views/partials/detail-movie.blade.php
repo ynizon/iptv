@@ -28,7 +28,7 @@
     <h3>{{__("Summary")}}</h3>
     <p class="cat-overview">{{($url->imdb != '' && $url->imdb != '-') ? $url->imdb : __("No summary yet: it will be fetched by the next refresh:info run.")}}</p>
     <div class="cat-actions">
-        <a id="ahref-{{$url->id}}" href="iptv://{{$url->urlFinal}}#{{$url->counterSec(Auth::id())}}" data-id="{{$url->id}}" class="stream cat-act cat-act-primary">
+        <a id="ahref-{{$url->id}}" href="iptv://{{$url->urlFinal}}#{{$url->counterSec(Auth::id())}}" data-id="{{$url->id}}" data-duration="{{(int) $url->duration}}" class="stream cat-act cat-act-primary">
             <svg width="18" height="18" aria-hidden="true"><use href="#ci-play"/></svg>
             {{__("Play")}}
             <span class="counter" data-min="{{$url->counterMin(Auth::id())}}" id="counter-{{$url->id}}">{{$url->counter(Auth::id())}}</span>
@@ -63,7 +63,7 @@
             <ul>
                 @foreach ($versions as $version)
                     <li>
-                        <a id="ahref-{{$version->id}}" href="iptv://{{$version->urlFinal}}#{{$version->counterSec(Auth::id())}}" data-id="{{$version->id}}" class="stream cat-episode" title="{{$version->name}}">
+                        <a id="ahref-{{$version->id}}" href="iptv://{{$version->urlFinal}}#{{$version->counterSec(Auth::id())}}" data-id="{{$version->id}}" data-duration="{{(int) $version->duration}}" class="stream cat-episode" title="{{$version->name}}">
                             <svg width="14" height="14" aria-hidden="true"><use href="#ci-play"/></svg>
                             {{implode(' · ', $version->parsedName()['tags']) ?: $version->name}}
                         </a>

@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/detail/{id}', [SearchController::class, 'detail'])->name('detail');
     Route::get('/detail_serie/{id}', [SearchController::class, 'detailSerie'])->name('detail_serie');
     Route::get('/export', [SearchController::class, 'export'])->name('export');
+    Route::get('/play/{id}', [SearchController::class, 'play'])->name('play');
     Route::post('/add_tv', [SearchController::class, 'add_tv'])->name('add_tv');
 });
 

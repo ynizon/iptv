@@ -252,9 +252,9 @@ function catalogSync(id) { Catalog.sync(id); }
 function catalogRemove(id) { Catalog.remove(id); }
 function catalogRemoveSerie(name, id) { Catalog.removeSerie(name, id); }
 
-// The Play links are "iptv://<stream url>#<start in seconds>", opened by VLC through the handler installed
-// on the computer (Settings). Android and iOS do not know them: VLC is opened with their own links
-function catalogPlayLink(href, title) {
+// The Play links are "iptv://<stream url>#<start in seconds>". A computer opens them through the handler of
+// Settings, or gets a VLC playlist file (the default: nothing to install). Android and iOS open VLC with their own links
+function catalogPlayLink(href, title, id) {
     const match = /^iptv:\/\/(https?):?\/\/([^#]*)(?:#(\d+))?$/.exec(href);
     if (!match) {
         return null;
@@ -272,8 +272,23 @@ function catalogPlayLink(href, title) {
     if (/iPad|iPhone|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && navigator.maxTouchPoints > 1)) {
         return "vlc-x-callback://x-callback-url/stream?url=" + encodeURIComponent(scheme + "://" + stream);
     }
+    if (id && catalogDesktopPlayer() === "xspf") {
+        return "/play/" + id + (parseInt(start, 10) > 0 ? "?start=" + parseInt(start, 10) : "");
+    }
 
     return null;
+}
+
+// How this computer opens the videos (Settings): "xspf" a VLC playlist file, "protocol" the iptv:// handler
+function catalogDesktopPlayer(player) {
+    try {
+        if (player) {
+            localStorage.setItem("iptv.desktopPlayer", player);
+        }
+        return localStorage.getItem("iptv.desktopPlayer") || "xspf";
+    } catch (e) {
+        return player || "xspf";
+    }
 }
 
 document.addEventListener("click", (event) => {
@@ -282,7 +297,7 @@ document.addEventListener("click", (event) => {
         return;
     }
     const name = document.getElementById("urlname-" + link.dataset.id);
-    const target = catalogPlayLink(link.getAttribute("href"), name ? name.textContent.trim() : link.title);
+    const target = catalogPlayLink(link.getAttribute("href"), name ? name.textContent.trim() : link.title, link.dataset.id);
     if (target) {
         // The other click handlers (progress counter) still run
         event.preventDefault();

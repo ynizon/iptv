@@ -110,12 +110,14 @@ class CatalogTest extends TestCase
 
     public function test_the_catalog_page_loads_the_details_on_demand(): void
     {
-        $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION', ['created_at' => now()]);
+        $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION', ['created_at' => now(), 'duration' => 113]);
 
         $page = $this->actingAs($this->user())->post('/search', ['search' => '', 'category' => 'ACTION']);
         $page->assertOk()->assertSee('Alpha')->assertSee('cat-new', false)->assertDontSee('data-detail="' . $movie->id . '"', false);
 
-        $this->get('/detail/' . $movie->id)->assertOk()->assertSee('data-detail="' . $movie->id . '"', false);
+        // The length stops the progress counter at the end of the movie
+        $this->get('/detail/' . $movie->id)->assertOk()->assertSee('data-detail="' . $movie->id . '"', false)
+            ->assertSee('data-duration="113"', false);
     }
 
     public function test_a_series_card_counts_all_its_episodes(): void
@@ -165,6 +167,23 @@ class CatalogTest extends TestCase
 
         $this->get('/detail/' . $fhd->id . '?versions=' . $uhd->id . ',' . $hd->id)->assertOk()
             ->assertSee('Autres versions')->assertSee('ahref-' . $hd->id, false)->assertSee('4K · HDR');
+    }
+
+    public function test_play_gives_a_vlc_playlist_starting_at_the_resume_position(): void
+    {
+        $movie = $this->url('Fast & Furious (MULTI) FHD 2009', 'ACTION');
+
+        $response = $this->actingAs($this->user())->get('/play/' . $movie->id . '?start=754');
+
+        $response->assertOk()->assertHeader('Content-Type', 'application/xspf+xml')
+            ->assertHeader('Content-Disposition', 'attachment; filename="fast-furious-multi-fhd-2009.xspf"');
+        $xml = simplexml_load_string($response->getContent());
+        $this->assertSame($movie->url, (string) $xml->trackList->track->location);
+        $this->assertSame('Fast & Furious (MULTI) FHD 2009', (string) $xml->trackList->track->title);
+        $this->assertStringContainsString('<vlc:option>start-time=754</vlc:option>', $response->getContent());
+
+        // From the start: no option
+        $this->assertStringNotContainsString('start-time', $this->get('/play/' . $movie->id)->getContent());
     }
 
     public function test_the_export_gives_a_m3u_file(): void

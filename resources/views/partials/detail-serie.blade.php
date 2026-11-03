@@ -42,7 +42,7 @@
             <ul>
                 @foreach ($episods as $episod => $url)
                     <li>
-                        <a id="ahref-{{$url->id}}" href="iptv://{{$url->urlFinal}}#{{$url->counterSec(Auth::id())}}" data-id="{{$url->id}}" class="stream cat-episode">
+                        <a id="ahref-{{$url->id}}" href="iptv://{{$url->urlFinal}}#{{$url->counterSec(Auth::id())}}" data-id="{{$url->id}}" data-duration="{{(int) $url->duration}}" class="stream cat-episode">
                             <svg width="14" height="14" aria-hidden="true"><use href="#ci-play"/></svg>
                             {{__("Episode")}} {{$episod}}
                         </a>
