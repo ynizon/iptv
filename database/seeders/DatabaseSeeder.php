@@ -84,7 +84,7 @@ class DatabaseSeeder extends Seeder
             'admin' => true,
             'formats' => '["HD","UHD","FHD"]',
             'email' => config('app.admin_user'),
-            'password'=>bcrypt(env('ADMIN_PASSWORD',"admin")),
+            'password'=>bcrypt(config('app.admin_password')),
         ]);
 
         DB::table('playlists')->insert([
@@ -92,7 +92,7 @@ class DatabaseSeeder extends Seeder
             'content' => '',
             'tld' => '',
             'ip' => '',
-            'url' => env("M3U","http://yourwebsite/get.php?username=XXX&password=YYY&type=m3u_plus&output=ts.m3U"),
+            'url' => config('app.m3u'),
         ]);
 
         foreach ($this->filters as $filter)

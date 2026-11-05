@@ -244,4 +244,23 @@ class CatalogTest extends TestCase
         $this->actingAs(User::factory()->create(['admin' => true]))->post('/users/' . $other->id . '/tv-token')->assertRedirect();
         $this->assertNotSame($token, $other->fresh()->tv_token);
     }
+
+    public function test_the_pictures_are_kept_by_the_browser_until_the_poster_changes(): void
+    {
+        $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION', ['picture' => 'https://image.tmdb.org/t/p/w300/a.jpg']);
+        $address = $movie->pictureUrl();
+        DB::table('urls')->where('id', $movie->id)->update(['picture' => 'https://image.tmdb.org/t/p/w300/b.jpg']);
+        $this->assertNotSame($address, Url::find($movie->id)->pictureUrl());
+
+        // A picture already resized, in a public folder of the test
+        $public = sys_get_temp_dir() . '/iptv-public-' . uniqid();
+        mkdir("$public/images/playlist/{$movie->id}", 0777, true);
+        copy(public_path('images/default.webp'), "$public/images/playlist/{$movie->id}/{$movie->id}.jpg");
+        app()->usePublicPath($public);
+
+        $this->actingAs($this->user())->get('/picture/' . $movie->id)->assertOk()
+            ->assertHeader('Cache-Control', 'immutable, max-age=31536000, public');
+
+        @unlink("$public/images/playlist/{$movie->id}/{$movie->id}.jpg");
+    }
 }

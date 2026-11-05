@@ -4,7 +4,7 @@
 @php($rating = $url->rating())
 <div class="cat-detail-item" data-detail="{{$url->id}}" hidden>
     <div class="cat-detail-head">
-        <img loading="lazy" src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" alt="">
+        <img loading="lazy" src="{{$url->pictureUrl()}}" alt="">
         <div>
             <h2 id="urlname-{{$url->id}}">{{$parsed['title']}}</h2>
             <p class="cat-detail-meta">{{$parsed['year'] ?? ($url->year ?: '')}}</p>

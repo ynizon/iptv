@@ -146,6 +146,15 @@ class Url extends Model
     }
 
     /**
+     * Address of the picture: with a hash of its source, which changes the address when the poster
+     * changes, so the browser keeps the picture as long as it wants
+     */
+    public function pictureUrl(): string
+    {
+        return $this->picture != '' ? "/picture/" . $this->id . "?v=" . substr(md5($this->picture), 0, 8) : '/images/default.webp';
+    }
+
+    /**
      * Found by one of the last refreshes (the urls of the first import have no date)
      */
     public function isNew(): bool

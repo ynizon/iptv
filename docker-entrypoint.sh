@@ -44,9 +44,19 @@ if [ ! -f "$DATA/database.sqlite" ]; then
     new_db=1
 fi
 
+# The caches of the previous start may hold the former settings or code
+php artisan optimize:clear
+
 php artisan migrate --force
 if [ "$new_db" = 1 ]; then
     php artisan db:seed --force
 fi
+
+# Settings, routes, events and views compiled once (restart the container after changing /data/.env)
+php artisan optimize
+
+# PHP-FPM and the cron jobs run as www-data: the data and the caches must be theirs
+# (only the files which are not yet: the pictures are many)
+find "$DATA" bootstrap/cache ! -user www-data -exec chown -h www-data:www-data {} +
 
 exec "$@"

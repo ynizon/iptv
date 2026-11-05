@@ -478,14 +478,18 @@ class SearchController extends Controller
 
     public function picture($id) {
         $default = public_path('images/default.webp');
+        // Kept by the browser: the address of the picture changes with the poster (Url::pictureUrl)
+        $kept = ['Cache-Control' => 'public, max-age=31536000, immutable'];
+        // Tried again later
+        $retried = ['Cache-Control' => 'public, max-age=3600'];
         try {
             $file = public_path("images/playlist/$id/$id.jpg");
             $logo = public_path("images/playlist/$id/logo.jpg");
             if (file_exists($logo)) {
-                return response()->file($logo);
+                return response()->file($logo, $kept);
             }
             if (file_exists($file)) {
-                return response()->file($file);
+                return response()->file($file, $kept);
             }
 
             $url = Url::findOrFail($id);
@@ -493,12 +497,12 @@ class SearchController extends Controller
             if ($content === false) {
                 // Not cached: the picture will be tried again next time.
                 // A channel shows its name instead (the page handles the 404)
-                return $url->tvchannel ? response("", 404) : response()->file($default);
+                return $url->tvchannel ? response("", 404, $retried) : response()->file($default, $retried);
             }
 
             if ($url->tvchannel && extension_loaded('gd')) {
                 $this->saveLogoTile($content, $logo);
-                return response()->file($logo);
+                return response()->file($logo, $kept);
             }
 
             if (extension_loaded('gd')) {
@@ -513,13 +517,13 @@ class SearchController extends Controller
                 $image = $manager->read($content);
                 $image->resize($width, $height);
                 $image->toJpg()->save($file);
-                return response()->file($file);
+                return response()->file($file, $kept);
             } else {
                 $ctype = (new \finfo(FILEINFO_MIME_TYPE))->buffer($content);
-                return response($content)->header('Content-Type', $ctype);
+                return response($content)->header('Content-Type', $ctype)->withHeaders($kept);
             }
         } catch (\Throwable $e) {
-            return response()->file($default);
+            return response()->file($default, $retried);
         }
     }
 

@@ -74,7 +74,7 @@
                                 data-good="{{$rating['good'] ? 1 : 0}}" data-low="{{$rating['low'] ? 1 : 0}}"
                                 aria-label="{{$parsed['title']}}, {{$rating['label']}} {{$rating['badge']}}">
                             <span class="cat-poster">
-                                <img loading="lazy" src="{{($url->picture != '') ? "/picture/".$url->id : '/images/default.webp'}}" alt="">
+                                <img loading="lazy" src="{{$url->pictureUrl()}}" alt="">
                                 <span class="cat-badge tier-{{$rating['tier']}}" title="{{$rating['tooltip']}}">{{$rating['badge']}}</span>
                                 @if ($url->isDoubtful())
                                     <span class="cat-doubt" title="{{__("TMDB data to check")}}">!</span>
@@ -118,7 +118,7 @@
                                 data-good="{{$rating['good'] ? 1 : 0}}" data-low="{{$rating['low'] ? 1 : 0}}"
                                 aria-label="{{$parsed['title']}}, {{$rating['label']}} {{$rating['badge']}}">
                             <span class="cat-poster">
-                                <img loading="lazy" src="{{($first->picture != '') ? "/picture/".$first->id : '/images/default.webp'}}" alt="">
+                                <img loading="lazy" src="{{$first->pictureUrl()}}" alt="">
                                 <span class="cat-badge tier-{{$rating['tier']}}" title="{{$rating['tooltip']}}">{{$rating['badge']}}</span>
                                 @if (collect($seasons)->flatten()->contains(fn ($episode) => $episode->isNew()))
                                     <span class="cat-new">{{__("New")}}</span>
@@ -149,7 +149,7 @@
                     <div class="cat-channel">
                         <a href="iptv://{{$url->urlFinal}}" data-id="{{$url->id}}" class="cat-channel-link" title="{{$url->name}}">
                             @if ($url->picture != '')
-                                <img class="cat-logo" loading="lazy" src="/picture/{{$url->id}}" alt="" data-name="{{$channel['name']}}" onerror="catalogLogoMissing(this)">
+                                <img class="cat-logo" loading="lazy" src="{{$url->pictureUrl()}}" alt="" data-name="{{$channel['name']}}" onerror="catalogLogoMissing(this)">
                             @else
                                 <span class="cat-logo cat-logo-text" aria-hidden="true">{{$channel['name']}}</span>
                             @endif

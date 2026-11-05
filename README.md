@@ -79,9 +79,11 @@ docker run -d --name iptv -p 8051:80 -v /path/on/your/host/iptv-data:/data ynizo
 - `.env`: your settings (`M3U`, `ADMIN_USER`, `ADMIN_PASSWORD`, `TMDB_KEY`...), created from `.env.example` on the first start
 - `database.sqlite`: playlists, catalog, users, favorites and history (with `database.sqlite-wal` / `-shm` next to it)
 - `images/`: cache of the posters and channel logos
-- `storage/`: logs, sessions
+- `storage/`: logs (`storage/logs/cron.log` for the nightly refreshes), sessions
 
-At startup, the container creates what is missing in `/data`, runs the migrations (and the seeder on a new database), then starts cron: every night at 2:00 (container time, UTC), `refresh:playlist` imports the playlists, then `refresh:info` fetches TMDB data for the new titles.
+The container runs nginx (static files and pictures already made served directly, kept by the browser) with PHP-FPM and OPcache.
+
+At startup, the container creates what is missing in `/data`, runs the migrations (and the seeder on a new database), caches the settings, routes and views (restart it after changing `/data/.env`), then starts cron, PHP-FPM and nginx. Cron: every night at 2:00 (container time, UTC), `refresh:playlist` imports the playlists, then `refresh:info` fetches TMDB data for the new titles.
 
 After the first start, set your variables in `/data/.env` and restart the container.
 

@@ -5,7 +5,7 @@
 @php(ksort($seasons))
 <div class="cat-detail-item" data-detail="s{{$first->id}}" hidden>
     <div class="cat-detail-head">
-        <img loading="lazy" src="{{($first->picture != '') ? "/picture/".$first->id : '/images/default.webp'}}" alt="">
+        <img loading="lazy" src="{{$first->pictureUrl()}}" alt="">
         <div>
             <h2>{{$parsed['title']}}</h2>
             <p class="cat-detail-meta">{{implode(' · ', array_filter([$first->year ?: null, trans_choice(':count season|:count seasons', count($seasons))]))}}</p>

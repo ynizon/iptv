@@ -30,10 +30,6 @@ Route::get('/', function () {
     }
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::get('/tv/{token}', [SearchController::class, 'tv']);
 // The stream links given to the players: the token stands for the user, the provider url stays hidden
 Route::get('/s/{token}/{file}', [SearchController::class, 'stream'])->where('file', '[0-9]+(\.[A-Za-z0-9]+)?')->name('stream');
@@ -49,7 +45,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('/users', UserController::class);
     Route::post('/users/{user}/tv-token', [UserController::class, 'tvToken'])->name('users.tv-token');
     Route::get('/settings', [SearchController::class, 'settings'])->name('settings');
-    Route::post('/settings', [SearchController::class, 'settings'])->name('settings');
+    // Not named: one name per route (needed by route:cache)
+    Route::post('/settings', [SearchController::class, 'settings']);
     Route::resource('/playlists', PlaylistController::class);
     Route::resource('/categories', CategoryController::class);
     Route::resource('/filters', FilterController::class);

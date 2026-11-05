@@ -2,10 +2,15 @@ FROM php:8.3-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git unzip zip cron sqlite3 libsqlite3-dev libzip-dev nodejs npm vim \
+    git unzip zip cron nginx sqlite3 libsqlite3-dev libzip-dev nodejs npm vim \
     libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install pdo pdo_sqlite gd
+    && docker-php-ext-install pdo pdo_sqlite gd opcache
+
+# PHP (OPcache) and PHP-FPM settings, nginx site
+COPY docker/php.ini /usr/local/etc/php/conf.d/zz-iptv.ini
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-iptv.conf
+COPY docker/nginx.conf /etc/nginx/sites-available/default
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -17,19 +22,21 @@ RUN cd / && rm -rf /var/www && git clone https://github.com/ynizon/iptv.git /var
 
 WORKDIR /var/www
 
-# Install dependencies
-RUN composer install --no-interaction
+# Install dependencies (with a class map: faster autoload)
+RUN composer install --no-interaction --optimize-autoloader
 
 # Install JS dependencies and compile the assets (no Vite dev server in the container)
 RUN npm install --legacy-peer-deps && npm run build
 
-# Install the cron jobs as root crontab (not in /etc/cron.d, whose format needs a user column)
+# Install the cron jobs as crontab of www-data, the user of PHP-FPM, so that both can write the same files
+# (not in /etc/cron.d, whose format needs a user column)
 COPY crontab /etc/laravel-crontab
-RUN crontab /etc/laravel-crontab
+RUN crontab -u www-data /etc/laravel-crontab
 
 # Link the application to /data (.env, database, pictures, logs) and migrate, at startup
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY docker/start.sh /usr/local/bin/docker-start.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-start.sh
 
 # The only folder to share: everything that must be kept
 VOLUME /data
@@ -37,10 +44,7 @@ VOLUME /data
 #Expose the port
 EXPOSE 80
 
-# Several requests at once (needs --no-reload): with a single one, a poster downloaded from TMDB (up to 10 s) blocked every page
-ENV PHP_CLI_SERVER_WORKERS=4
-
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# Start cron + php command (use supervisord for production)
-CMD ["sh", "-c", "cron && exec php artisan serve --host=0.0.0.0 --port=80 --no-reload"]
+# cron, PHP-FPM and nginx
+CMD ["docker-start.sh"]

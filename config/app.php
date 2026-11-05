@@ -17,6 +17,10 @@ return [
 
     // The account created by the seeder, which cannot be deleted
     'admin_user' => env('ADMIN_USER', 'admin@admin.com'),
+    'admin_password' => env('ADMIN_PASSWORD', 'admin'),
+
+    // The first playlist, created by the seeder
+    'm3u' => env('M3U', 'http://yourwebsite/get.php?username=XXX&password=YYY&type=m3u_plus&output=ts.m3U'),
 
     /*
     |--------------------------------------------------------------------------
