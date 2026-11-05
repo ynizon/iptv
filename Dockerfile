@@ -2,7 +2,7 @@ FROM php:8.3-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git unzip zip cron nginx sqlite3 libsqlite3-dev libzip-dev nodejs npm vim \
+    git unzip zip cron nginx tzdata sqlite3 libsqlite3-dev libzip-dev nodejs npm vim \
     libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install pdo pdo_sqlite gd opcache
@@ -27,6 +27,9 @@ RUN composer install --no-interaction --optimize-autoloader
 
 # Install JS dependencies and compile the assets (no Vite dev server in the container)
 RUN npm install --legacy-peer-deps && npm run build
+
+# The times of the cron jobs are Paris times (noon stays noon in summer and winter)
+RUN ln -sf /usr/share/zoneinfo/Europe/Paris /etc/localtime && echo "Europe/Paris" > /etc/timezone
 
 # Install the cron jobs as crontab of www-data, the user of PHP-FPM, so that both can write the same files
 # (not in /etc/cron.d, whose format needs a user column)

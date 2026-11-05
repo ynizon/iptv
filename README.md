@@ -83,7 +83,7 @@ docker run -d --name iptv -p 8051:80 -v /path/on/your/host/iptv-data:/data ynizo
 
 The container runs nginx (static files and pictures already made served directly, kept by the browser) with PHP-FPM and OPcache.
 
-At startup, the container creates what is missing in `/data`, runs the migrations (and the seeder on a new database), caches the settings, routes and views (restart it after changing `/data/.env`), then starts cron, PHP-FPM and nginx. Cron: every night at 2:00 (container time, UTC), `refresh:playlist` imports the playlists, then `refresh:info` fetches TMDB data for the new titles.
+At startup, the container creates what is missing in `/data`, runs the migrations (and the seeder on a new database), caches the settings, routes and views (restart it after changing `/data/.env`), then starts cron, PHP-FPM and nginx. Cron: every day at noon (Paris time), `refresh:playlist` imports the playlists, then `refresh:info` fetches TMDB data for the new titles.
 
 After the first start, set your variables in `/data/.env` and restart the container.
 

@@ -1,6 +1,6 @@
 # Run as www-data (the user of PHP-FPM). The log is in /data/storage/logs/cron.log
-# Every night: the playlists first (new, moved and removed titles), then TMDB for the new titles
-0 2 * * * cd /var/www && /usr/local/bin/php artisan refresh:playlist >> /var/www/storage/logs/cron.log 2>&1; /usr/local/bin/php artisan refresh:info >> /var/www/storage/logs/cron.log 2>&1
+# Every day at noon (Paris time): the playlists first (new, moved and removed titles), then TMDB for the new titles
+0 12 * * * cd /var/www && /usr/local/bin/php artisan refresh:playlist >> /var/www/storage/logs/cron.log 2>&1; /usr/local/bin/php artisan refresh:info >> /var/www/storage/logs/cron.log 2>&1
 # Every Sunday: keep only the end of the log
 0 1 * * 0 tail -n 5000 /var/www/storage/logs/cron.log > /var/www/storage/logs/cron.log.tmp && mv /var/www/storage/logs/cron.log.tmp /var/www/storage/logs/cron.log
 
