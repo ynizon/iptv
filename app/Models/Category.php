@@ -18,6 +18,10 @@ class Category extends Model
 
     // Virtual category of the main French channels (-1 and -2 are the favorites and the recent ones)
     public const MAIN_TV = "-3";
+    // Virtual category of the last movies and series: added by the refreshes of these last days,
+    // or in a "recently added" category of the provider
+    public const NEWS = "-4";
+    public const NEWS_DAYS = 30;
 
     // The main French channels in the TNT order: the names given by the provider, without the quality
     public const MAIN_CHANNELS = [
@@ -25,6 +29,8 @@ class Category extends Model
         ['C8'], ['W9'], ['TMC'], ['TFX'], ['NRJ 12', 'NRJ12'], ['LCP'], ['FRANCE 4'], ['BFM TV'], ['CNEWS'],
         ['CSTAR'], ['GULLI'], ['TF1 SERIES FILMS'], ["L'EQUIPE", "L'ÉQUIPE"], ['6TER'], ['RMC STORY'],
         ['RMC DECOUVERTE', 'RMC DÉCOUVERTE'], ['CHERIE 25', 'CHÉRIE 25'], ['LCI'], ['FRANCE INFO', 'FRANCEINFO'],
+        // Local channels, after the national ones
+        ['TELE NANTES', 'TÉLÉ NANTES', 'TELENANTES'],
     ];
 
     protected $fillable = [
@@ -69,7 +75,7 @@ class Category extends Model
     public static function warmPages(): int
     {
         self::clearCache();
-        $categories = array_merge(["", self::MAIN_TV], array_keys(self::groups()));
+        $categories = array_merge(["", self::MAIN_TV, self::NEWS], array_keys(self::groups()));
         foreach ($categories as $category) {
             self::pageUrls($category);
         }
@@ -123,6 +129,13 @@ class Category extends Model
         if ($category === self::MAIN_TV) {
             return self::mainChannels();
         }
+        if ($category === self::NEWS) {
+            $recentlyAdded = collect(self::groups())->filter(fn ($originals, $name) => self::isRecentlyAdded($name))->flatten()->all();
+            $query = Url::where("filter", "=", 0)->where("tvchannel", 0)->where(fn ($query) => $query
+                ->where("created_at", ">=", now()->subDays(self::NEWS_DAYS))->orWhereIn("category", $recentlyAdded));
+
+            return Url::limitByType($query, true);
+        }
         $query = Url::where("filter", "=", 0);
         if ($category != '') {
             $query->whereIn("category", self::groups()[$category] ?? [$category]);
@@ -132,11 +145,11 @@ class Category extends Model
     }
 
     /**
-     * "FILMS RÉCEMMENT AJOUTÉS", "RECEMMENT AJOUTÉES": shown last added first
+     * "FILMS RÉCEMMENT AJOUTÉS", "RECEMMENT AJOUTÉES" and the news: shown last added first
      */
     public static function isRecentlyAdded(?string $category): bool
     {
-        return str_contains(Str::upper(Str::ascii((string) $category)), "RECEMMENT AJOUT");
+        return $category === self::NEWS || str_contains(Str::upper(Str::ascii((string) $category)), "RECEMMENT AJOUT");
     }
 
     protected static function computeGroups(): array

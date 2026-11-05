@@ -43,6 +43,8 @@ php artisan refresh:info
 ````
 
 ### Playing the videos
+The players never get the provider urls (they hold the credentials of the subscription): every link (Play, Copy link, Send to TV) is a link of this site, `/s/<personal key>/<id>`, which redirects to the stream. If a link went out, Settings › My play links makes new ones and the previous ones stop working (an admin can do it for any user in Users).
+
 The Play buttons open the videos in VLC. On a computer, they download by default a small VLC playlist (`.xspf`, with the resume position): check « Always open files of this type » once in the browser and the next videos open in one click, nothing to install but VLC. A computer can use instead the `iptv://` links, with a small handler installed once (Settings › Play with VLC, chosen on each computer). On Android, the links open VLC directly (`intent:` links, the video starts where you left it), on iPhone and iPad through `vlc-x-callback://`: only VLC is needed.
 
 ## Updating the library

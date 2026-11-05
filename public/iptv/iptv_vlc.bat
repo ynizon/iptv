@@ -3,6 +3,7 @@
 rem Nettoyer l'URL pour retirer le préfixe "iptv://"
 set "url=%~1"
 set "url=%url:iptv://=%"
+set "url=%url:https//=https://%"
 set "url=%url:http//=http://%"
 
 for /f "tokens=1,2 delims=#" %%a in ("%url%") do (

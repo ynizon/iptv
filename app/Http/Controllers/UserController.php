@@ -96,4 +96,18 @@ class UserController extends Controller
             abort(403, __('Unauthorized action.'));
         }
     }
+
+    /**
+     * A new token for the stream links of a user (by an admin, or by the user): the links
+     * that may have leaked stop working
+     */
+    public function tvToken(User $user)
+    {
+        if (!Auth::user()->isAdmin() && Auth::id() !== $user->id) {
+            abort(403, __('Unauthorized action.'));
+        }
+        $user->newTvToken();
+
+        return back()->with('success', __('New links made: the previous ones do not work anymore.'));
+    }
 }

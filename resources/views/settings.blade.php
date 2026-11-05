@@ -98,4 +98,13 @@
         </div>
         <p class="set-help">{{__('If you cannot reach your IPTV server, try another DNS or update your hosts file.')}}</p>
     </section>
+    <section class="set-card">
+        <h2>{{__('My play links')}}</h2>
+        <p>{{__('The links given to VLC, to the TV or copied go through this site: the address of your provider, with its password, is never shown. They hold your personal key.')}}</p>
+        <p class="set-help">{{__('If you think a link went out, make new links: the previous ones stop working at once (also the TV link).')}}</p>
+        <form method="post" action="{{ route('users.tv-token', Auth::id()) }}" onsubmit="return confirm(@js(__('Make new links? The previous ones will stop working.')))">
+            @csrf
+            <button type="submit" class="set-btn set-btn-ghost">{{__('Make new links')}}</button>
+        </form>
+    </section>
 </x-settings.page>

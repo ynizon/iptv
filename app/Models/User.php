@@ -64,16 +64,31 @@ class User extends Authenticatable
         return json_encode(array_diff(\App\Http\Controllers\SearchController::FILTERS, json_decode($this->formats)));
     }
 
+    /**
+     * The token of the short tv url and of the stream links (/s/<token>/...), which hide the provider urls
+     */
     public function tvToken()
     {
         //Generate a random token for the short tv url on first use
         if (!$this->tv_token) {
-            do {
-                $token = Str::random(16);
-            } while (self::where('tv_token', $token)->exists());
-            $this->tv_token = $token;
-            $this->save();
+            $this->newTvToken();
         }
         return $this->tv_token;
+    }
+
+    /**
+     * Another token, when a link may have leaked: the previous links (copied, sent to the TV) stop working
+     */
+    public function newTvToken(): string
+    {
+        do {
+            $token = Str::random(16);
+        } while (self::where('tv_token', $token)->exists());
+        $this->tv_token = $token;
+        // It holds a link with the previous token
+        $this->url_stream = null;
+        $this->save();
+
+        return $token;
     }
 }

@@ -19,6 +19,9 @@ class SearchController extends Controller
 {
     public const FILTERS = ["HD", "SD", "UHD" , "FHD"];
 
+    // Token of the stream links of the user
+    protected ?string $token = null;
+
     public function __construct(protected $replaceDns = [])
     {
         // Not the "content" column: it holds the whole M3U file
@@ -86,7 +89,7 @@ class SearchController extends Controller
             . '  <title>' . $xml($title) . '</title>' . PHP_EOL
             . '  <trackList>' . PHP_EOL
             . '    <track>' . PHP_EOL
-            . '      <location>' . $xml($this->replaceUrlDns($url->url)) . '</location>' . PHP_EOL
+            . '      <location>' . $xml($this->streamLink($url)) . '</location>' . PHP_EOL
             . '      <title>' . $xml($title) . '</title>' . PHP_EOL
             . ($start > 0 ? '      <extension application="http://www.videolan.org/vlc/playlist/0"><vlc:option>start-time=' . $start . '</vlc:option></extension>' . PHP_EOL : '')
             . '    </track>' . PHP_EOL
@@ -99,36 +102,17 @@ class SearchController extends Controller
     }
 
     /**
-     * The channels and movies of a search as a M3U file (for Kodi), made only when asked
-     */
-    public function export(Request $request) {
-        [$urls, , $versions] = $this->results((string) $request->input("search"), $request->input("category"), $this->hiddenFormats());
-        // Every version of the movies
-        $movies = array_merge($urls["movies"], ...array_values($versions));
-
-        $content = "#EXTM3U" . PHP_EOL;
-        foreach (array_merge($urls["channels"], $movies) as $url) {
-            $content .= '#EXTINF:-1 tvg-id="'.$url['id'].'" tvg-name="'.$url['name'].'" tvg-logo="'.$url['picture'].'" group-title="'.$url['category'].'",'.$url['name'].PHP_EOL;
-            $content .= $url->urlFinal . PHP_EOL;
-        }
-
-        return response($content)
-            ->header('Content-Type', 'audio/x-mpegurl')
-            ->header('Content-Disposition', 'attachment; filename="iptv.m3u8"');
-    }
-
-    /**
      * Detail panel of a movie, loaded when its card is selected
      */
     public function detail(Request $request, $id) {
         $url = Url::findOrFail($id);
-        $url->urlFinal = $this->replaceUrlDns($url->url);
+        $url->urlFinal = $this->streamLink($url);
         // The other versions of the movie grouped on its card, in their order
         $ids = array_filter(array_map('intval', explode(",", (string) $request->input("versions"))));
         $versions = Url::whereIn("id", $ids)->where("movie", 1)->get()
             ->sortBy(fn ($version) => array_search($version->id, $ids))->values();
         foreach ($versions as $version) {
-            $version->urlFinal = $this->replaceUrlDns($version->url);
+            $version->urlFinal = $this->streamLink($version);
         }
 
         return view("partials.detail-movie", compact("url", "versions"));
@@ -145,7 +129,7 @@ class SearchController extends Controller
         $episodes = Url::where("serie", 1)->where("filter", 0)->where("name", "like", $serie . "%")->get();
         foreach ($episodes as $url) {
             if ($this->serieName($url->name) == $serie && !$this->hasFormat($url, $formats)) {
-                $url->urlFinal = $this->replaceUrlDns($url->url);
+                $url->urlFinal = $this->streamLink($url);
                 [$season, $episod] = $this->seasonEpisod($url->name);
                 $seasons[$season][$episod] = $url;
             }
@@ -158,9 +142,9 @@ class SearchController extends Controller
      * Movies, series (name => season => episod => url) and channels of a search, with the first episode of each series
      */
     private function results(string $query, $category, array $formats): array {
-        if ($category === Category::MAIN_TV) {
-            // The main channels, searched among themselves
-            $urlsTmp = Category::pageUrls(Category::MAIN_TV)
+        if ($category === Category::MAIN_TV || $category === Category::NEWS) {
+            // The virtual categories (main channels, news), searched among themselves
+            $urlsTmp = Category::pageUrls($category)
                 ->filter(fn ($url) => $query == '' || mb_stripos($url->name, $query) !== false);
         } elseif ($query == '' && $category != -1 && $category != -2) {
             // A whole category (or every one): cached after each refresh
@@ -199,7 +183,7 @@ class SearchController extends Controller
         $firstEpisodes = [];
         foreach ($urlsTmp as $url) {
             if (!$this->hasFormat($url, $formats)) {
-                $url->urlFinal = $this->replaceUrlDns($url->url);
+                $url->urlFinal = $this->streamLink($url);
                 if ($url->movie) {
                     $urls["movies"][] = $url;
                 }
@@ -313,6 +297,31 @@ class SearchController extends Controller
         preg_match('/(\d{2}) E(\d{2})/', trim($name), $matches);
 
         return !empty($matches) ? [$matches[1], $matches[2]] : [0, 0];
+    }
+
+    /**
+     * The link given to the players (VLC, TV, copied link): on this site, it redirects to the stream
+     * of the provider, whose url holds the credentials of the subscription. Made with the token
+     * of the user, which can be changed when a link leaked
+     */
+    private function streamLink(Url $url): string {
+        $this->token ??= Auth::user()->tvToken();
+        // With the extension of the stream: some players read it to know the format
+        $extension = pathinfo((string) parse_url($url->url, PHP_URL_PATH), PATHINFO_EXTENSION);
+
+        return route("stream", ["token" => $this->token, "file" => $url->id . ($extension != '' ? "." . $extension : '')]);
+    }
+
+    /**
+     * The stream of a link made by streamLink(): no session needed (VLC, TV), the token stands for the user
+     */
+    public function stream(string $token, string $file) {
+        if (!User::where("tv_token", $token)->exists()) {
+            abort(404);
+        }
+        $url = Url::findOrFail((int) $file);
+
+        return redirect()->away($this->replaceUrlDns($url->url));
     }
 
     private function replaceUrlDns($url){

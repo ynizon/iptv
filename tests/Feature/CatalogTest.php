@@ -169,16 +169,35 @@ class CatalogTest extends TestCase
             ->assertSee('Autres versions')->assertSee('ahref-' . $hd->id, false)->assertSee('4K · HDR');
     }
 
+    public function test_the_news_are_the_last_added_movies_and_series(): void
+    {
+        $this->url('Added today (FR) FHD 2015', 'ACTION', ['created_at' => now()]);
+        $this->url('In the provider news (FR) FHD 2024', 'FILMS RÉCEMMENT AJOUTÉS');
+        $this->url('Lupin (MULTI) FHD S01 E01', 'SERIES', ['created_at' => now()->subDays(3)]);
+        // Too old, or a channel
+        $this->url('Added two months ago (FR) FHD 2025', 'ACTION', ['created_at' => now()->subDays(60)]);
+        $this->url('|FR| TF1 FHD', 'FR TV FULL HD|4K  (France)', ['tvchannel' => 1, 'movie' => 0, 'created_at' => now()]);
+
+        $this->assertSame(['Added today (FR) FHD 2015', 'In the provider news (FR) FHD 2024', 'Lupin (MULTI) FHD S01 E01'],
+            Category::pageUrls(Category::NEWS)->pluck('name')->all());
+
+        // Sorted last added first in the page too
+        $this->actingAs($this->user())->post('/search', ['search' => '', 'category' => Category::NEWS])
+            ->assertOk()->assertSee('data-added="1"', false)->assertSee('data-sort="added"', false);
+    }
+
     public function test_play_gives_a_vlc_playlist_starting_at_the_resume_position(): void
     {
         $movie = $this->url('Fast & Furious (MULTI) FHD 2009', 'ACTION');
 
-        $response = $this->actingAs($this->user())->get('/play/' . $movie->id . '?start=754');
+        $user = $this->user();
+        $response = $this->actingAs($user)->get('/play/' . $movie->id . '?start=754');
 
         $response->assertOk()->assertHeader('Content-Type', 'application/xspf+xml')
             ->assertHeader('Content-Disposition', 'attachment; filename="fast-furious-multi-fhd-2009.xspf"');
         $xml = simplexml_load_string($response->getContent());
-        $this->assertSame($movie->url, (string) $xml->trackList->track->location);
+        // The stream link of the site, not the provider url
+        $this->assertSame(url('/s/' . $user->fresh()->tv_token . '/' . $movie->id . '.mkv'), (string) $xml->trackList->track->location);
         $this->assertSame('Fast & Furious (MULTI) FHD 2009', (string) $xml->trackList->track->title);
         $this->assertStringContainsString('<vlc:option>start-time=754</vlc:option>', $response->getContent());
 
@@ -186,14 +205,43 @@ class CatalogTest extends TestCase
         $this->assertStringNotContainsString('start-time', $this->get('/play/' . $movie->id)->getContent());
     }
 
-    public function test_the_export_gives_a_m3u_file(): void
+    public function test_the_pages_give_stream_links_of_the_site_not_the_provider_urls(): void
     {
         $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION');
+        $channel = $this->url('|FR| TF1 FHD', 'FR TV FULL HD|4K  (France)', ['tvchannel' => 1, 'movie' => 0]);
+        $user = $this->user();
+        $this->actingAs($user);
 
-        $response = $this->actingAs($this->user())->get('/export?category=ACTION');
+        $detail = $this->get('/detail/' . $movie->id)->assertOk()->assertDontSee($movie->url, false);
+        $detail->assertSee('iptv://' . url('/s/' . $user->fresh()->tv_token . '/' . $movie->id . '.mkv'), false);
+        $this->post('/search', ['search' => '', 'category' => 'FR TV FULL HD|4K  (France)'])->assertOk()->assertDontSee($channel->url, false);
+    }
 
-        $response->assertOk()->assertHeader('Content-Disposition', 'attachment; filename="iptv.m3u8"');
-        $this->assertStringStartsWith('#EXTM3U', $response->getContent());
-        $this->assertStringContainsString($movie->url, $response->getContent());
+    public function test_a_stream_link_redirects_to_the_provider_until_the_token_changes(): void
+    {
+        $movie = $this->url('Alpha (FR) FHD 2024', 'ACTION');
+        $user = $this->user();
+        $token = $user->tvToken();
+
+        // No session: VLC or the TV
+        $this->get('/s/' . $token . '/' . $movie->id . '.mkv')->assertRedirect($movie->url);
+        $this->get('/s/wrong-token/' . $movie->id . '.mkv')->assertNotFound();
+
+        // A link went out: new links
+        $this->actingAs($user)->post('/users/' . $user->id . '/tv-token')->assertRedirect();
+        $this->get('/s/' . $token . '/' . $movie->id . '.mkv')->assertNotFound();
+        $this->get('/s/' . $user->fresh()->tv_token . '/' . $movie->id . '.mkv')->assertRedirect($movie->url);
+    }
+
+    public function test_only_an_admin_makes_new_links_for_another_user(): void
+    {
+        $other = $this->user();
+        $token = $other->tvToken();
+
+        $this->actingAs($this->user())->post('/users/' . $other->id . '/tv-token')->assertForbidden();
+        $this->assertSame($token, $other->fresh()->tv_token);
+
+        $this->actingAs(User::factory()->create(['admin' => true]))->post('/users/' . $other->id . '/tv-token')->assertRedirect();
+        $this->assertNotSame($token, $other->fresh()->tv_token);
     }
 }

@@ -452,8 +452,6 @@
     "Weighted rating of :score or more": "Note pondérée de :score ou plus",
     "Weighted rating below :score": "Note pondérée inférieure à :score",
     "Fewer than :votes votes on TMDB: the TMDB rating is shown, but it is counted closer to the average for sorting": "Moins de :votes votes sur TMDB : la note TMDB est affichée, mais elle est comptée plus près de la moyenne pour le tri",
-    "Export M3U": "Exporter en M3U",
-    "The channels and movies of this list, for Kodi or another player": "Les chaînes et films de cette liste, pour Kodi ou un autre lecteur",
     "The details could not be loaded. Select the title again to retry.": "Le détail n’a pas pu être chargé. Sélectionnez de nouveau le titre pour réessayer.",
     "The main French channels": "Les principales chaînes françaises",
     "Other versions": "Autres versions",
@@ -462,5 +460,14 @@
     "Download a VLC file (nothing to install)": "Téléchargent un fichier VLC (rien à installer)",
     "Open the iptv:// link (handler below)": "Ouvrent le lien iptv:// (gestionnaire ci-dessous)",
     "With the VLC file, check « Always open files of this type » in the downloads of the browser the first time: the next videos open in one click, where you left them.": "Avec le fichier VLC, cochez « Toujours ouvrir les fichiers de ce type » dans les téléchargements du navigateur la première fois : les vidéos suivantes s’ouvrent en un clic, là où vous les aviez laissées.",
-    "The iptv:// link needs a small handler, installed once:": "Le lien iptv:// nécessite un petit gestionnaire, à installer une fois :"
+    "The iptv:// link needs a small handler, installed once:": "Le lien iptv:// nécessite un petit gestionnaire, à installer une fois :",
+    "The last movies and series available": "Les derniers films et séries disponibles",
+    "My play links": "Mes liens de lecture",
+    "The links given to VLC, to the TV or copied go through this site: the address of your provider, with its password, is never shown. They hold your personal key.": "Les liens donnés à VLC, à la TV ou copiés passent par ce site : l’adresse de votre fournisseur, avec son mot de passe, n’apparaît jamais. Ils contiennent votre clé personnelle.",
+    "If you think a link went out, make new links: the previous ones stop working at once (also the TV link).": "Si vous pensez qu’un lien a fuité, créez de nouveaux liens : les précédents cessent aussitôt de fonctionner (le lien TV aussi).",
+    "Make new links? The previous ones will stop working.": "Créer de nouveaux liens ? Les précédents ne fonctionneront plus.",
+    "Make new links": "Créer de nouveaux liens",
+    "New links for :name? The previous ones will stop working.": "Nouveaux liens pour :name ? Les précédents ne fonctionneront plus.",
+    "Make new links for :name": "Créer de nouveaux liens pour :name",
+    "New links made: the previous ones do not work anymore.": "Nouveaux liens créés : les précédents ne fonctionnent plus."
 }

@@ -23,9 +23,6 @@
         @if (count($urls["channels"]) > 0)
             <button type="button" class="cat-tab" role="tab" data-tab="channels">{{__("Channels")}} <span>{{count($urls["channels"])}}</span></button>
         @endif
-        @if (count($urls["movies"]) + count($urls["channels"]) > 0)
-            <a class="cat-export" href="{{route("export", ["search" => request("search"), "category" => request("category")])}}" title="{{__("The channels and movies of this list, for Kodi or another player")}}">{{__("Export M3U")}}</a>
-        @endif
     </div>
 
     @if (count($urls["movies"]) + count($urls["series"]) + count($urls["channels"]) == 0)
@@ -172,7 +169,7 @@
                             <button type="button" class="cat-icon" onclick="copyLink(@js($url->urlFinal))" aria-label="{{__("Copy link")}}">
                                 <svg width="16" height="16" aria-hidden="true"><use href="#ci-copy"/></svg>
                             </button>
-                            <button type="button" class="cat-icon" title="{{$tvLink}}" onclick="addTvStream(this, @js($url->url), @js($tvLink))" aria-label="{{__("Send to TV")}}">
+                            <button type="button" class="cat-icon" title="{{$tvLink}}" onclick="addTvStream(this, @js($url->urlFinal), @js($tvLink))" aria-label="{{__("Send to TV")}}">
                                 <svg width="16" height="16" aria-hidden="true"><use href="#ci-tv"/></svg>
                             </button>
                         </div>

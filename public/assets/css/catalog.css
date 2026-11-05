@@ -107,6 +107,4 @@
 .cat-channel-tags{padding:0 2px}
 .cat-channel-tags span{height:20px;font-size:11px}
 .cat-channel-actions{display:flex;justify-content:flex-start;gap:4px}
-.cat-export{margin-left:auto;align-self:center;font-size:13px;font-weight:600;color:#9AA3AF !important;text-decoration:none}
-.cat-export:hover{color:#F1F3F5 !important}
 .cat-detail-loading{min-height:200px;justify-content:center}

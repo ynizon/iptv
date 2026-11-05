@@ -21,6 +21,12 @@
                     </span>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
                 </a>
+                <form action="{{ route('users.tv-token', $user->id) }}" method="post" onsubmit="return confirm(@js(__('New links for :name? The previous ones will stop working.', ['name' => $user->name])))">
+                    @csrf
+                    <button type="submit" class="set-icon-btn" title="{{__('Make new links')}}" aria-label="{{__('Make new links for :name', ['name' => $user->name])}}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>
+                    </button>
+                </form>
                 <form action="{{ route('users.destroy', $user->id) }}" method="post" onsubmit="return confirm(@js(__('Delete :name?', ['name' => $user->name])))">
                     @csrf
                     @method('DELETE')

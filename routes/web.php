@@ -35,6 +35,8 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/tv/{token}', [SearchController::class, 'tv']);
+// The stream links given to the players: the token stands for the user, the provider url stays hidden
+Route::get('/s/{token}/{file}', [SearchController::class, 'stream'])->where('file', '[0-9]+(\.[A-Za-z0-9]+)?')->name('stream');
 Route::get('/download/iptvreg', [SearchController::class, 'iptvreg']);
 Route::get('/download/iptvsh', [SearchController::class, 'iptvsh']);
 Route::get('/download/iptvdesktop', [SearchController::class, 'iptvdesktop']);
@@ -45,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('/users', UserController::class);
+    Route::post('/users/{user}/tv-token', [UserController::class, 'tvToken'])->name('users.tv-token');
     Route::get('/settings', [SearchController::class, 'settings'])->name('settings');
     Route::post('/settings', [SearchController::class, 'settings'])->name('settings');
     Route::resource('/playlists', PlaylistController::class);
@@ -64,7 +67,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/picture/{id}', [SearchController::class, 'picture'])->name('picture');
     Route::get('/detail/{id}', [SearchController::class, 'detail'])->name('detail');
     Route::get('/detail_serie/{id}', [SearchController::class, 'detailSerie'])->name('detail_serie');
-    Route::get('/export', [SearchController::class, 'export'])->name('export');
     Route::get('/play/{id}', [SearchController::class, 'play'])->name('play');
     Route::post('/add_tv', [SearchController::class, 'add_tv'])->name('add_tv');
 });

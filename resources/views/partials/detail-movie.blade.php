@@ -47,7 +47,7 @@
             <svg width="18" height="18" aria-hidden="true"><use href="#ci-copy"/></svg>
             {{__("Copy link")}}
         </button>
-        <button type="button" class="cat-act" title="{{$tvLink}}" onclick="addTvStream(this, @js($url->url), @js($tvLink))">
+        <button type="button" class="cat-act" title="{{$tvLink}}" onclick="addTvStream(this, @js($url->urlFinal), @js($tvLink))">
             <svg width="18" height="18" aria-hidden="true"><use href="#ci-tv"/></svg>
             {{__("Send to TV")}}
         </button>
@@ -72,7 +72,7 @@
                         <button type="button" class="cat-icon" onclick="copyLink(@js($version->urlFinal))" aria-label="{{__("Copy link")}}">
                             <svg width="16" height="16" aria-hidden="true"><use href="#ci-copy"/></svg>
                         </button>
-                        <button type="button" class="cat-icon" title="{{$tvLink}}" onclick="addTvStream(this, @js($version->url), @js($tvLink))" aria-label="{{__("Send to TV")}}">
+                        <button type="button" class="cat-icon" title="{{$tvLink}}" onclick="addTvStream(this, @js($version->urlFinal), @js($tvLink))" aria-label="{{__("Send to TV")}}">
                             <svg width="16" height="16" aria-hidden="true"><use href="#ci-tv"/></svg>
                         </button>
                     </li>
