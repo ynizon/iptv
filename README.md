@@ -16,7 +16,7 @@ Features:
 - dark theme, languages: en / fr
 
 ## Requirements
-- PHP 8.3 with the sqlite, gd and curl extensions
+- PHP 8.3 or later (8.6 in the Docker image) with the sqlite, gd and curl extensions
 - Composer (https://getcomposer.org/download/)
 - Node.js and npm, to compile the assets
 - VLC on each computer that plays the videos (https://www.videolan.org/vlc/)
