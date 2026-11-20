@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     git unzip zip cron nginx tzdata sqlite3 libsqlite3-dev libzip-dev nodejs npm vim \
     libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install pdo pdo_sqlite gd opcache
+    && docker-php-ext-install pdo pdo_sqlite gd
+# (OPcache is part of PHP since 8.5: nothing to install, it is set in docker/php.ini)
 
 # PHP (OPcache) and PHP-FPM settings, nginx site
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-iptv.ini
